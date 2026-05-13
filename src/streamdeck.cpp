@@ -7,6 +7,51 @@
 #include "pt/pt_display.h"
 #include <ArduinoOTA.h>
 
+// Transparent LVGL overlay placed above all widgets when the display sleeps.
+// The first touch lands here (not on any button), wakes the display, and
+// destroys the overlay — so subsequent touches reach widgets normally.
+static lv_obj_t* g_sleep_overlay = nullptr;
+
+static void sleep_overlay_cb(lv_event_t* e) {
+    (void)e;
+    lv_obj_t* overlay = g_sleep_overlay;
+    g_sleep_overlay    = nullptr;
+    pt_set_backlight(g_brightness, false);
+    pt_last_touch_ms = millis();
+    lv_obj_del_async(overlay);
+}
+
+static void enter_sleep() {
+    pt_set_backlight(0, false);
+
+    g_sleep_overlay = lv_obj_create(lv_scr_act());
+    lv_obj_set_size(g_sleep_overlay, lv_pct(100), lv_pct(100));
+    lv_obj_set_pos(g_sleep_overlay, 0, 0);
+    lv_obj_set_style_bg_opa(g_sleep_overlay,    LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_border_width(g_sleep_overlay, 0,          LV_PART_MAIN);
+    lv_obj_set_style_pad_all(g_sleep_overlay,     0,           LV_PART_MAIN);
+    lv_obj_add_flag(g_sleep_overlay,   LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_flag(g_sleep_overlay,   LV_OBJ_FLAG_IGNORE_LAYOUT);
+    lv_obj_clear_flag(g_sleep_overlay, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_event_cb(g_sleep_overlay, sleep_overlay_cb, LV_EVENT_PRESSED, nullptr);
+}
+
+static void check_sleep_status() {
+    static const uint32_t timeout_ms_map[] = {0, 30000, 60000, 120000, 300000, 600000};
+
+    if (pt_last_touch_ms == 0) pt_last_touch_ms = millis();
+
+    // Sleeping: overlay handles wake, nothing to do here.
+    if (g_sleep_overlay != nullptr) return;
+
+    if (g_sleep_timeout == 0 || g_sleep_timeout >= 6) return;
+
+    uint32_t threshold = timeout_ms_map[g_sleep_timeout];
+    if ((millis() - pt_last_touch_ms) >= threshold) {
+        enter_sleep();
+    }
+}
+
 void StreamDeckApp::setup() {
     WiFi.mode(WIFI_STA);
 
@@ -43,33 +88,6 @@ void StreamDeckApp::setup() {
     ArduinoOTA.begin();
 }
 
-static void check_sleep_status() {
-    // Maps g_sleep_timeout index → inactivity threshold in milliseconds.
-    // Index 0 means disabled; indices 1-5 correspond to 30s, 1m, 2m, 5m, 10m.
-    static const uint32_t timeout_ms_map[] = {0, 30000, 60000, 120000, 300000, 600000};
-    static bool is_sleeping = false;
-
-    if (g_sleep_timeout == 0 || g_sleep_timeout >= 6) {
-        if (is_sleeping) {
-            pt_set_backlight(g_brightness, false);
-            is_sleeping = false;
-        }
-        return;
-    }
-
-    uint32_t inactive_ms = lv_display_get_inactive_time(NULL);
-    uint32_t threshold   = timeout_ms_map[g_sleep_timeout];
-
-    if (!is_sleeping && inactive_ms >= threshold) {
-        pt_set_backlight(0, false);
-        is_sleeping = true;
-    } else if (is_sleeping && inactive_ms < threshold) {
-        // LVGL reset its timer → a touch woke the device
-        pt_set_backlight(g_brightness, false);
-        is_sleeping = false;
-    }
-}
-
 void StreamDeckApp::loop() {
     check_ble_status();
     check_wifi_status();
@@ -77,6 +95,14 @@ void StreamDeckApp::loop() {
 
     if (g_pending_ui_update) {
         g_pending_ui_update = false;
+        // If sleeping, the overlay lives on the current screen and will be
+        // destroyed by lv_obj_clean inside create_main_ui. Wake the display
+        // so the user sees the refreshed content.
+        if (g_sleep_overlay) {
+            g_sleep_overlay = nullptr;
+            pt_set_backlight(g_brightness, false);
+            pt_last_touch_ms = millis();
+        }
         lv_scr_load(g_main_screen);
         create_main_ui();
     }

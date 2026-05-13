@@ -55,6 +55,10 @@ extern lv_color_t *pt_disp_draw_buf;
 extern lv_color_t *pt_disp_draw_buf2;
 extern volatile bool pt_display_suspended;
 
+// Timestamp (millis) of the last real touch — updated by pt_touchpad_read.
+// Used by the sleep logic to track inactivity independently of LVGL internals.
+extern volatile unsigned long pt_last_touch_ms;
+
 /* =========================
  *  Backlight (LEDC) Config
  * ========================= */
@@ -204,9 +208,12 @@ inline void pt_disp_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px
  */
 inline void pt_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data)
 {
-  pt_touchpanel.read(); // Read touch data
+  pt_touchpanel.read();
+
   if (pt_touchpanel.isTouched)
   {
+    pt_last_touch_ms = millis(); // track inactivity for sleep mode
+
     for (int i = 0; i < pt_touchpanel.touches; i++)
     {
       if (i == 0)

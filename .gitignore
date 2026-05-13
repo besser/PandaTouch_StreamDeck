@@ -24,3 +24,7 @@ __pycache__/
 *.bin
 *.elf
 build_out*.txt
+
+# AIs
+.claude/
+AGENTS.md
