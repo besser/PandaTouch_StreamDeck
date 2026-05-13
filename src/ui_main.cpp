@@ -152,6 +152,7 @@ void create_main_ui() {
     lv_obj_set_style_bg_opa(nav_cont, 0, 0);
     lv_obj_set_style_border_width(nav_cont, 0, 0);
     lv_obj_set_style_pad_all(nav_cont, 0, 0);
+    lv_obj_clear_flag(nav_cont, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_flex_flow(nav_cont, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(nav_cont, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
@@ -168,6 +169,7 @@ void create_main_ui() {
         lv_obj_set_size(page_box, 250, 50);
         lv_obj_set_style_bg_opa(page_box, 0, 0);
         lv_obj_set_style_border_width(page_box, 0, 0);
+        lv_obj_clear_flag(page_box, LV_OBJ_FLAG_SCROLLABLE);
         lv_obj_set_flex_flow(page_box, LV_FLEX_FLOW_ROW);
         lv_obj_set_flex_align(page_box, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
@@ -196,12 +198,14 @@ void create_main_ui() {
     lv_obj_set_size(right_box, 300, 50);
     lv_obj_set_style_bg_opa(right_box, 0, 0);
     lv_obj_set_style_border_width(right_box, 0, 0);
+    lv_obj_clear_flag(right_box, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_flex_flow(right_box, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(right_box, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
     g_wifi_label = lv_label_create(right_box);
     String wtxt = "\xEF\x87\xAB " + g_ip_addr;
     lv_label_set_text(g_wifi_label, wtxt.c_str());
+    lv_obj_set_style_text_color(g_wifi_label, lv_color_hex(0xFFFFFF), 0);
     lv_obj_set_style_margin_right(g_wifi_label, 20, 0);
 
     g_settings_btn = lv_btn_create(right_box);
