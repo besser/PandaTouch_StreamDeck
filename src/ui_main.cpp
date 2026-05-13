@@ -23,8 +23,20 @@ static lv_obj_t* g_slider = nullptr;
 static lv_obj_t* g_settings_btn = nullptr;
 
 static void btn_event_cb(lv_event_t* e) {
-    uint8_t idx = (uint8_t)(uintptr_t)lv_event_get_user_data(e);
-    handle_button_action(idx);
+    uint8_t local_idx = (uint8_t)(uintptr_t)lv_event_get_user_data(e);
+    uint8_t global_idx = (g_current_page * BUTTONS_PER_PAGE) + local_idx;
+    handle_button_action(global_idx);
+}
+
+static void page_nav_cb(lv_event_t* e) {
+    int dir = (int)(uintptr_t)lv_event_get_user_data(e);
+    if (dir > 0) {
+        g_current_page = (g_current_page + 1) % g_num_pages;
+    } else {
+        g_current_page = (g_current_page == 0) ? g_num_pages - 1 : g_current_page - 1;
+    }
+    save_settings(false);
+    create_main_ui();
 }
 
 static void slider_event_cb(lv_event_t* e) {
@@ -79,20 +91,26 @@ void create_main_ui() {
     lv_obj_set_style_pad_gap(g_grid, 10, LV_PART_MAIN);
 
     int btn_count = g_rows * g_cols;
+    uint8_t page_offset = g_current_page * BUTTONS_PER_PAGE;
+
     for (int i = 0; i < btn_count; i++) {
+        uint8_t global_idx = page_offset + i;
         lv_obj_t* btn = lv_btn_create(g_grid);
         lv_obj_set_grid_cell(btn, LV_GRID_ALIGN_STRETCH, i % g_cols, 1, LV_GRID_ALIGN_STRETCH, i / g_cols, 1);
-        lv_obj_set_style_bg_color(btn, lv_color_hex(g_configs[i].color), LV_PART_MAIN);
+        lv_obj_set_style_bg_color(btn, lv_color_hex(g_configs[global_idx].color), LV_PART_MAIN);
 
         lv_obj_set_flex_flow(btn, LV_FLEX_FLOW_COLUMN);
         lv_obj_set_flex_align(btn, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
         lv_obj_set_style_pad_row(btn, 5, 0);
 
         g_btns[i] = btn;
+        lv_obj_set_style_bg_opa(btn, 255, LV_PART_MAIN);
+        lv_obj_set_style_bg_color(btn, lv_color_hex(0x000000), LV_STATE_PRESSED);
+        lv_obj_set_style_bg_opa(btn, 100, LV_STATE_PRESSED);
 
         bool icon_or_img_present = false;
-        if (g_configs[i].imgPath[0] != '\0') {
-            String fpath = g_configs[i].imgPath;
+        if (g_configs[global_idx].imgPath[0] != '\0') {
+            String fpath = g_configs[global_idx].imgPath;
             if (!fpath.startsWith("/")) fpath = "/" + fpath;
 
             if (LittleFS.exists(fpath)) {
@@ -108,18 +126,18 @@ void create_main_ui() {
             }
         }
 
-        if (!icon_or_img_present && g_configs[i].icon[0] != '\0') {
+        if (!icon_or_img_present && g_configs[global_idx].icon[0] != '\0') {
             lv_obj_t* icon = lv_label_create(btn);
-            lv_label_set_text(icon, g_configs[i].icon);
+            lv_label_set_text(icon, g_configs[global_idx].icon);
             if (g_cols > 4) lv_obj_set_style_text_font(icon, &lv_font_montserrat_18, 0);
             else lv_obj_set_style_text_font(icon, &lv_font_montserrat_24, 0);
             g_btn_icons[i] = icon;
             icon_or_img_present = true;
         }
 
-        if (g_configs[i].label[0] != '\0') {
+        if (g_configs[global_idx].label[0] != '\0') {
             lv_obj_t* label = lv_label_create(btn);
-            lv_label_set_text(label, g_configs[i].label);
+            lv_label_set_text(label, g_configs[global_idx].label);
             if (g_cols > 4) lv_obj_set_style_text_font(label, &lv_font_montserrat_12, 0);
             else lv_obj_set_style_text_font(label, &lv_font_montserrat_14, 0);
             g_btn_labels[i] = label;
@@ -128,39 +146,86 @@ void create_main_ui() {
         lv_obj_add_event_cb(btn, btn_event_cb, LV_EVENT_CLICKED, (void*)(uintptr_t)i);
     }
 
-    g_slider = lv_slider_create(g_grid);
+    // Bottom Navigation Bar
+    lv_obj_t* nav_cont = lv_obj_create(g_grid);
+    lv_obj_set_grid_cell(nav_cont, LV_GRID_ALIGN_STRETCH, 0, g_cols, LV_GRID_ALIGN_STRETCH, g_rows, 1);
+    lv_obj_set_style_bg_opa(nav_cont, 0, 0);
+    lv_obj_set_style_border_width(nav_cont, 0, 0);
+    lv_obj_set_style_pad_all(nav_cont, 0, 0);
+    lv_obj_set_flex_flow(nav_cont, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(nav_cont, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    // Brightness Slider
+    g_slider = lv_slider_create(nav_cont);
+    lv_obj_set_size(g_slider, 150, 20);
     lv_slider_set_range(g_slider, 10, 100);
     lv_slider_set_value(g_slider, g_brightness, LV_ANIM_OFF);
-    lv_obj_set_grid_cell(g_slider, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_CENTER, g_rows, 1);
     lv_obj_add_event_cb(g_slider, slider_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
 
-    g_wifi_label = lv_label_create(g_grid);
+    // Page Indicator and Nav (hidden when only one page is configured)
+    if (g_num_pages > 1) {
+        lv_obj_t* page_box = lv_obj_create(nav_cont);
+        lv_obj_set_size(page_box, 250, 50);
+        lv_obj_set_style_bg_opa(page_box, 0, 0);
+        lv_obj_set_style_border_width(page_box, 0, 0);
+        lv_obj_set_flex_flow(page_box, LV_FLEX_FLOW_ROW);
+        lv_obj_set_flex_align(page_box, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+        lv_obj_t* prev_btn = lv_btn_create(page_box);
+        lv_obj_set_size(prev_btn, 45, 45);
+        lv_obj_t* prev_lbl = lv_label_create(prev_btn);
+        lv_label_set_text(prev_lbl, LV_SYMBOL_LEFT);
+        lv_obj_center(prev_lbl);
+        lv_obj_add_event_cb(prev_btn, page_nav_cb, LV_EVENT_CLICKED, (void*)(uintptr_t)-1);
+
+        lv_obj_t* page_lbl = lv_label_create(page_box);
+        lv_label_set_text_fmt(page_lbl, "Page %d / %d", g_current_page + 1, g_num_pages);
+        lv_obj_set_style_margin_left(page_lbl, 15, 0);
+        lv_obj_set_style_margin_right(page_lbl, 15, 0);
+
+        lv_obj_t* next_btn = lv_btn_create(page_box);
+        lv_obj_set_size(next_btn, 45, 45);
+        lv_obj_t* next_lbl = lv_label_create(next_btn);
+        lv_label_set_text(next_lbl, LV_SYMBOL_RIGHT);
+        lv_obj_center(next_lbl);
+        lv_obj_add_event_cb(next_btn, page_nav_cb, LV_EVENT_CLICKED, (void*)(uintptr_t)1);
+    }
+
+    // IP and Config
+    lv_obj_t* right_box = lv_obj_create(nav_cont);
+    lv_obj_set_size(right_box, 300, 50);
+    lv_obj_set_style_bg_opa(right_box, 0, 0);
+    lv_obj_set_style_border_width(right_box, 0, 0);
+    lv_obj_set_flex_flow(right_box, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(right_box, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    g_wifi_label = lv_label_create(right_box);
     String wtxt = "\xEF\x87\xAB " + g_ip_addr;
     lv_label_set_text(g_wifi_label, wtxt.c_str());
-    lv_obj_set_grid_cell(g_wifi_label, LV_GRID_ALIGN_CENTER, 1, (g_cols > 2 ? g_cols - 2 : 1), LV_GRID_ALIGN_CENTER, g_rows, 1);
+    lv_obj_set_style_margin_right(g_wifi_label, 20, 0);
 
-    g_settings_btn = lv_btn_create(g_grid);
-    lv_obj_set_grid_cell(g_settings_btn, LV_GRID_ALIGN_STRETCH, g_cols - 1, 1, LV_GRID_ALIGN_STRETCH, g_rows, 1);
+    g_settings_btn = lv_btn_create(right_box);
+    lv_obj_set_size(g_settings_btn, 110, 45);
     lv_obj_t* set_label = lv_label_create(g_settings_btn);
     lv_label_set_text(set_label, "\xEF\x80\x93 Config");
+    lv_obj_center(set_label);
     lv_obj_add_event_cb(g_settings_btn, settings_btn_cb, LV_EVENT_CLICKED, NULL);
 }
 
 void refresh_main_ui() {
-    if (!g_grid) {
-        create_main_ui();
-        return;
-    }
+    if (!g_grid) return;
 
     lv_obj_set_style_bg_color(g_main_screen, lv_color_hex(g_bg_color), LV_PART_MAIN);
     lv_obj_set_style_bg_color(g_grid, lv_color_hex(g_bg_color), LV_PART_MAIN);
 
     int btn_count = g_rows * g_cols;
+    uint8_t page_offset = g_current_page * BUTTONS_PER_PAGE;
     for (int i = 0; i < btn_count; i++) {
         if (!g_btns[i]) continue;
-        lv_obj_set_style_bg_color(g_btns[i], lv_color_hex(g_configs[i].color), LV_PART_MAIN);
-        if (g_btn_labels[i]) lv_label_set_text(g_btn_labels[i], g_configs[i].label);
-        if (g_btn_icons[i]) lv_label_set_text(g_btn_icons[i], g_configs[i].icon);
+        uint8_t global_idx = page_offset + i;
+        lv_obj_set_style_bg_color(g_btns[i], lv_color_hex(g_configs[global_idx].color), LV_PART_MAIN);
+        if (g_btn_labels[i]) lv_label_set_text(g_btn_labels[i], g_configs[global_idx].label);
+        if (g_btn_icons[i]) lv_label_set_text(g_btn_icons[i], g_configs[global_idx].icon);
     }
 
     String wtxt = "\xEF\x87\xAB " + g_ip_addr;

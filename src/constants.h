@@ -4,8 +4,11 @@
 
 #include <stdint.h>
 
-#define MAX_BUTTONS 20
-#define PANDA_VERSION "1.7.1"
+#define MAX_PAGES 5
+#define BUTTONS_PER_PAGE 20
+#define MAX_TOTAL_BUTTONS (MAX_PAGES * BUTTONS_PER_PAGE)
+#define MAX_BUTTONS BUTTONS_PER_PAGE // Keep this for backward compatibility in some places or refactor
+#define PANDA_VERSION "1.8.0"
 
 enum ButtonType {
     BTN_TYPE_APP = 0,
@@ -16,7 +19,8 @@ enum ButtonType {
 
 enum TargetOS {
     OS_WINDOWS = 0,
-    OS_MACOS
+    OS_MACOS,
+    OS_LINUX
 };
 
 enum KbLang {

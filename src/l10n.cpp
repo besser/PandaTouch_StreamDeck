@@ -20,7 +20,8 @@ static const L10n g_l10n_en = {
     "None", "Basic combination uses Ctrl (Win) or Cmd (Mac) plus one key.",
     "Button", "- Key -",
     {"None", "OK", "Close", "Copy", "Paste", "Cut", "Play", "Pause", "PlayPause", "Mute", "Settings", "Home", "Save", "Edit", "File", "Dir", "Plus", "Prev", "Next", "Stop"},
-    "Background Color", "Icon", "Custom Image"
+    "Background Color", "Icon", "Custom Image",
+    "Pages", "Select Number of Pages"
 };
 
 static const L10n g_l10n_es = {
@@ -42,7 +43,8 @@ static const L10n g_l10n_es = {
     "Ninguno", "La combinacion basica usa Ctrl (Windows) o Cmd (Mac) mas una tecla.",
     "Boton", "- Tecla -",
     {"Ninguno", "Aceptar", "Cerrar", "Copiar", "Pegar", "Cortar", "Reproducir", "Pausa", "Play/Pausa", "Silencio", "Ajustes", "Inicio", "Guardar", "Editar", "Archivo", "Carpeta", "Mas", "Anterior", "Siguiente", "Parar"},
-    "Color de Fondo", "Icono", "Imagen Personalizada"
+    "Color de Fondo", "Icono", "Imagen Personalizada",
+    "Paginas", "Seleccionar Numero de Paginas"
 };
 
 const char* g_sym_names[20] = {"None", "OK", "Close", "Copy", "Paste", "Cut", "Play", "Pause", "PlayPause", "Mute", "Settings", "Home", "Save", "Edit", "File", "Dir", "Plus", "Prev", "Next", "Stop"};

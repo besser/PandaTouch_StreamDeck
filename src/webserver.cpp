@@ -49,9 +49,12 @@ static void build_config_json(AsyncWebServerRequest* request) {
     doc["cols"] = g_cols;
     doc["os"] = g_target_os;
     doc["lang"] = g_kb_lang;
+    doc["max_pages"] = MAX_PAGES;
+    doc["num_pages"] = g_num_pages;
+    doc["btns_per_page"] = BUTTONS_PER_PAGE;
 
     JsonArray btns = doc["buttons"].to<JsonArray>();
-    for (int i = 0; i < MAX_BUTTONS; i++) {
+    for (int i = 0; i < MAX_TOTAL_BUTTONS; i++) {
         JsonObject b = btns.add<JsonObject>();
         b["label"] = g_configs[i].label;
         b["value"] = g_configs[i].value;
@@ -167,14 +170,16 @@ void init_webserver() {
         if (request->hasParam("cols", true)) { g_cols = request->getParam("cols", true)->value().toInt(); if (g_cols < 1 || g_cols > 5) g_cols = 3; }
         if (request->hasParam("os", true)) g_target_os = request->getParam("os", true)->value().toInt();
         if (request->hasParam("lang", true)) g_kb_lang = request->getParam("lang", true)->value().toInt();
+        if (request->hasParam("num_pages", true)) {
+            uint8_t np = (uint8_t)request->getParam("num_pages", true)->value().toInt();
+            if (np >= 1 && np <= MAX_PAGES) {
+                g_num_pages = np;
+                if (g_current_page >= g_num_pages) g_current_page = 0;
+            }
+        }
 
-        for (int i = 0; i < MAX_BUTTONS; i++) {
+        for (int i = 0; i < MAX_TOTAL_BUTTONS; i++) {
             String p = "b" + String(i);
-
-            memset(g_configs[i].label, 0, 16);
-            memset(g_configs[i].value, 0, 256);
-            memset(g_configs[i].icon, 0, 8);
-            memset(g_configs[i].imgPath, 0, 32);
 
             if (request->hasParam(p + "l", true)) {
                 String label = request->getParam(p + "l", true)->value();
@@ -251,10 +256,12 @@ void init_webserver() {
         doc["wifi_ssid"] = g_wifi_ssid;
 
         auto save_btns_to_json = [&](const char* path, const char* key) {
-            ButtonConfig btns[MAX_BUTTONS];
+            ButtonConfig* btns = (ButtonConfig*)malloc(sizeof(ButtonConfig) * MAX_BUTTONS);
+            if (!btns) return;
+            memset(btns, 0, sizeof(ButtonConfig) * MAX_BUTTONS);
             File f = LittleFS.open(path, "r");
             if (f) {
-                f.read((uint8_t*)btns, sizeof(btns));
+                f.read((uint8_t*)btns, sizeof(ButtonConfig) * MAX_BUTTONS);
                 f.close();
             }
             JsonArray arr = doc[key].to<JsonArray>();
@@ -268,6 +275,7 @@ void init_webserver() {
                 b["icon"] = btns[i].icon;
                 b["img"] = btns[i].imgPath;
             }
+            free(btns);
         };
 
         save_btns_to_json("/win_btns.bin", "win_btns");
@@ -341,8 +349,9 @@ void init_webserver() {
 
         auto restore_btns = [&](JsonArray arr, const char* path) {
             Serial.printf("RESTORE: Writing %s with %u buttons\n", path, arr.size());
-            ButtonConfig btns[MAX_BUTTONS];
-            memset(btns, 0, sizeof(btns));
+            ButtonConfig* btns = (ButtonConfig*)malloc(sizeof(ButtonConfig) * MAX_BUTTONS);
+            if (!btns) return;
+            memset(btns, 0, sizeof(ButtonConfig) * MAX_BUTTONS);
             for (int i = 0; i < MAX_BUTTONS && i < arr.size(); i++) {
                 JsonObject b = arr[i];
                 strncpy(btns[i].label, b["label"] | "Button", 15);
@@ -388,12 +397,13 @@ void init_webserver() {
             }
             File f = LittleFS.open(path, "w");
             if (f) {
-                f.write((uint8_t*)btns, sizeof(btns));
+                f.write((uint8_t*)btns, sizeof(ButtonConfig) * MAX_BUTTONS);
                 f.close();
-                Serial.printf("RESTORE: %s written OK (%u bytes)\n", path, sizeof(btns));
+                Serial.printf("RESTORE: %s written OK (%u bytes)\n", path, sizeof(ButtonConfig) * MAX_BUTTONS);
             } else {
                 Serial.printf("RESTORE: FAILED to open %s for writing\n", path);
             }
+            free(btns);
         };
 
         if (!doc["win_btns"].isNull()) {

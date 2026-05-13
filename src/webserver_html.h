@@ -24,7 +24,8 @@ body{background:#121212;color:white}
 <h2>PandaDeck Dash <span class='badge bg-secondary' style='font-size:0.5em'>v__VERSION__</span></h2>
 <div class='d-flex align-items-center gap-3'>
 <div class='d-flex align-items-center gap-2'><label id="lblKb">Keyboard:</label><select id='langSelect' class='form-select form-select-sm' style='width:105px'><option value='0'>English</option><option value='1'>Espanol</option></select></div>
-<div class='d-flex align-items-center gap-2'><label id="lblOs">OS:</label><select id='osSelect' class='form-select form-select-sm' style='width:105px'><option value='0'>Windows</option><option value='1'>macOS</option></select></div>
+<div class='d-flex align-items-center gap-2'><label id="lblOs">OS:</label><select id='osSelect' class='form-select form-select-sm' style='width:105px'><option value='0'>Windows</option><option value='1'>macOS</option><option value='2'>Linux</option></select></div>
+<div class='d-flex align-items-center gap-2'><label id="lblPage">Page:</label><select id='pageSelect' class='form-select form-select-sm' style='width:100px'></select></div>
 <div class='d-flex align-items-center gap-2'><label id="lblGrid">Grid:</label><select id='gridSelect' class='form-select form-select-sm' style='width:100px'><option value='2x2'>2x2</option><option value='3x2'>3x2</option><option value='3x3'>3x3</option><option value='4x3'>4x3</option><option value='5x3'>5x3</option></select></div>
 <div class='d-flex align-items-center gap-2'><label id="lblBg">Background:</label><input type='color' id='globalBg' name='bg' form='configForm' class='form-control form-control-color' style='height:35px'></div>
 </div></div>
@@ -90,10 +91,13 @@ function parseC(i,v){
 }
 
 function updateVisibleCards(r,c){
+ const page=parseInt(document.getElementById('pageSelect').value)||0;
+ const buttonsPerPage=parseInt(L10N.btns_per_page)||20;
+ const start=page*buttonsPerPage;
  const count=r*c;
- for(let i=0;i<20;i++){
+ for(let i=0;i<100;i++){
   const card=document.getElementById('card'+i);
-  if(card) card.style.display=(i<count)?'block':'none';
+  if(card) card.style.display=(i>=start && i<start+count)?'block':'none';
  }
 }
 
@@ -101,19 +105,26 @@ async function load(){
  try{
   const r=await fetch('/api/config');const d=await r.json();
   const lr=await fetch('/api/l10n');const l=await lr.json();L10N=l;
+  L10N.btns_per_page = d.btns_per_page;
   document.getElementById('globalBg').value='#'+d.bg.padStart(6,'0');
   document.getElementById('gridSelect').value=d.cols+'x'+d.rows;
   document.getElementById('osSelect').value=d.os;
   document.getElementById('langSelect').value=d.lang;
+  
+  const ps=document.getElementById('pageSelect');
+  if(ps.options.length===0){
+   for(let p=0;p<d.max_pages;p++) ps.innerHTML+=`<option value='${p}'>Page ${p+1}</option>`;
+  }
+
   updateVisibleCards(d.rows,d.cols);
   const fr=await fetch('/api/files');const files=await fr.json();
   const selects=document.querySelectorAll('.asset-select');
   selects.forEach(s=>{s.innerHTML='<option value="">'+l.none+'</option>';files.forEach(file=>s.innerHTML+=`<option value='${file.name}'>${file.name}</option>`)});
-  for(let i=0;i<20;i++){
+  for(let i=0;i<100;i++){
    const s=document.getElementById('key'+i);
-   s.innerHTML=KEYS.map(k=>`<option value='${k}'>${k||l.select_key_ph}</option>`).join('');
+   if(s) s.innerHTML=KEYS.map(k=>`<option value='${k}'>${k||l.select_key_ph}</option>`).join('');
   }
-  for(let i=0;i<20;i++){
+  for(let i=0;i<100;i++){
    if(!document.getElementsByName('b'+i+'l')[0]) continue;
    document.getElementsByName('b'+i+'l')[0].value=d.buttons[i].label;
    document.getElementsByName('b'+i+'v')[0].value=d.buttons[i].value;
@@ -129,6 +140,11 @@ async function load(){
   files.forEach(file=>fl.innerHTML+=`<li class='list-group-item bg-dark text-white d-flex justify-content-between align-items-center px-2' style='border-color:#333'>${file.name} <button onclick="del('${file.name}')" class='btn-del'>&times;</button></li>`);
  }catch(e){console.error(e)}
 }
+
+document.getElementById('pageSelect').onchange=(e)=>{
+ const[c,r]=document.getElementById('gridSelect').value.split('x').map(Number);
+ updateVisibleCards(r,c);
+};
 
 document.getElementById('osSelect').onchange=async(e)=>{
  document.getElementById('osInput').value=e.target.value;
@@ -247,7 +263,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
  const r=await fetch('/api/config');const d=await r.json();
  const container=document.getElementById('buttonContainer');
  container.innerHTML='';
- for(let i=0;i<20;i++){
+ for(let i=0;i<100;i++){
   const div=document.createElement('div');
   div.className='card p-2 text-center btn-card';
   div.id='card'+i;
@@ -256,7 +272,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
    <input type='text' name='b${i}l' class='form-control form-control-sm mb-1' placeholder='Name' maxlength='15'>
    <input type='text' name='b${i}v' id='val${i}' class='form-control form-control-sm mb-1 text-uppercase' placeholder='Command' maxlength='255'>
    <select name='b${i}t' id='type${i}' class='form-select form-select-sm mb-1' onchange='toggleBuilder(${i})'>
-    <option value='0'>App (Win+R / Cmd+Space)</option>
+    <option value='0'>App (Win+R / Cmd+Space / Alt+F2)</option>
     <option value='1'>Media Key</option>
     <option value='2'>Basic Combo (Ctrl/Cmd + Key)</option>
     <option value='3'>Advanced Combo</option>

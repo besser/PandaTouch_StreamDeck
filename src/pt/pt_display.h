@@ -353,8 +353,8 @@ inline void pt_enter_ota_mode()
   if (pt_disp_draw_buf) { free(pt_disp_draw_buf); pt_disp_draw_buf = NULL; }
   if (pt_disp_draw_buf2) { free(pt_disp_draw_buf2); pt_disp_draw_buf2 = NULL; }
 
-  pt_gfx.fillScreen(0x000000);
-  pt_gfx.setTextColor(0xFFFFFF);
+  pt_gfx.fillScreen(0x0000);
+  pt_gfx.setTextColor(0xFFFF);
   pt_gfx.setTextSize(3);
   pt_gfx.setCursor(200, 200);
   pt_gfx.print("Updating...");

@@ -45,6 +45,8 @@ static void settings_grid_btn_cb(lv_event_t* e);
 static void settings_os_btn_cb(lv_event_t* e);
 static void settings_wifi_btn_cb(lv_event_t* e);
 static void settings_lang_btn_cb(lv_event_t* e);
+static void settings_pages_btn_cb(lv_event_t* e);
+static void pages_selected(const char* txt);
 static void edit_btn_select_cb(lv_event_t* e);
 static void grid_selected(const char* txt);
 static void os_selected(const char* txt);
@@ -84,6 +86,9 @@ void create_settings_ui() {
 
         lv_obj_t* lang_btn = lv_list_add_btn(list, "\xEF\x81\x92", l->kb_lang_label);
         lv_obj_add_event_cb(lang_btn, settings_lang_btn_cb, LV_EVENT_CLICKED, NULL);
+
+        lv_obj_t* pages_btn = lv_list_add_btn(list, "\xEF\x80\xBA", l->pages_label);
+        lv_obj_add_event_cb(pages_btn, settings_pages_btn_cb, LV_EVENT_CLICKED, NULL);
 
         int btn_count = g_rows * g_cols;
         for (int i = 0; i < btn_count; i++) {
@@ -306,20 +311,24 @@ static void grid_selected(const char* txt) {
 static void os_selected(const char* txt) {
     if (strcmp(txt, "Windows") == 0) g_target_os = OS_WINDOWS;
     else if (strcmp(txt, "macOS") == 0) g_target_os = OS_MACOS;
+    else if (strcmp(txt, "Linux") == 0) g_target_os = OS_LINUX;
 
     save_settings(false);
     load_settings();
     lv_scr_load(g_main_screen);
-    refresh_main_ui();
+    create_main_ui();
 }
 
 static void lang_selected(const char* txt) {
-    if (strcmp(txt, "English (US)") == 0) g_kb_lang = LANG_US;
-    else if (strcmp(txt, "Espanol (ES)") == 0) g_kb_lang = LANG_ES;
+    if (strstr(txt, "English")) g_kb_lang = LANG_US;
+    else if (strstr(txt, "Espanol")) g_kb_lang = LANG_ES;
 
     save_settings(false);
+    load_settings();
+    g_settings_needs_rebuild = true;
     lv_scr_load(g_main_screen);
-    refresh_main_ui();
+    create_main_ui();
+    g_settings_needs_rebuild = false;
 }
 
 // ========== Settings Button Callbacks ==========
@@ -334,8 +343,8 @@ static void settings_grid_btn_cb(lv_event_t* e) {
 }
 
 static void settings_os_btn_cb(lv_event_t* e) {
-    const char* os_opts[] = {"Windows", "macOS"};
-    create_selection_screen(get_l10n()->select_os, "\xEF\x84\xB9", os_opts, 2, os_selected);
+    const char* os_opts[] = {"Windows", "macOS", "Linux"};
+    create_selection_screen(get_l10n()->select_os, "\xEF\x84\xB9", os_opts, 3, os_selected);
 }
 
 static void settings_wifi_btn_cb(lv_event_t* e) {
@@ -345,6 +354,22 @@ static void settings_wifi_btn_cb(lv_event_t* e) {
 static void settings_lang_btn_cb(lv_event_t* e) {
     const char* lang_opts[] = {"English (US)", "Espanol (ES)"};
     create_selection_screen(get_l10n()->select_lang, "\xEF\x81\x92", lang_opts, 2, lang_selected);
+}
+
+static void pages_selected(const char* txt) {
+    uint8_t n = (uint8_t)atoi(txt);
+    if (n < 1 || n > MAX_PAGES) n = MAX_PAGES;
+    g_num_pages = n;
+    if (g_current_page >= g_num_pages) g_current_page = 0;
+    g_settings_needs_rebuild = true;
+    save_settings(false);
+    lv_scr_load(g_main_screen);
+    create_main_ui();
+}
+
+static void settings_pages_btn_cb(lv_event_t* e) {
+    const char* page_opts[] = {"1", "2", "3", "4", "5"};
+    create_selection_screen(get_l10n()->select_pages, "\xEF\x80\xBA", page_opts, MAX_PAGES, pages_selected);
 }
 
 static void edit_btn_select_cb(lv_event_t* e) {
@@ -357,7 +382,12 @@ static void edit_btn_select_cb(lv_event_t* e) {
 static void back_to_main_cb(lv_event_t* e) {
     g_editing_bg = false;
     lv_scr_load(g_main_screen);
-    refresh_main_ui();
+    if (g_settings_needs_rebuild) {
+        create_main_ui();
+        g_settings_needs_rebuild = false;
+    } else {
+        refresh_main_ui();
+    }
 }
 
 static void save_wifi_cb(lv_event_t* e) {
@@ -434,5 +464,5 @@ static void save_edit_cb(lv_event_t* e) {
     save_settings();
     g_editing_bg = false;
     lv_scr_load(g_main_screen);
-    refresh_main_ui();
+    create_main_ui();
 }

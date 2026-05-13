@@ -62,6 +62,8 @@ struct L10n {
     const char* color_title;
     const char* icon_title;
     const char* image_title;
+    const char* pages_label;
+    const char* select_pages;
 };
 
 const L10n* get_l10n();

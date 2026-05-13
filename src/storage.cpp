@@ -12,15 +12,17 @@ struct LegacyButtonConfig {
     char imgPath[32];
 };
 
-ButtonConfig g_configs[MAX_BUTTONS];
+ButtonConfig g_configs[MAX_TOTAL_BUTTONS];
 uint32_t g_bg_color = 0x121212;
 uint8_t g_rows = 3;
 uint8_t g_cols = 3;
 uint8_t g_target_os = OS_WINDOWS;
+uint8_t g_current_page = 0;
 char g_wifi_ssid[32] = "";
 char g_wifi_pass[64] = "";
 uint8_t g_kb_lang = LANG_US;
 uint8_t g_brightness = 50;
+uint8_t g_num_pages = MAX_PAGES;
 String g_wifi_status = "Disconnected";
 String g_ip_addr = "0.0.0.0";
 
@@ -30,12 +32,7 @@ void init_storage() {
     if (!LittleFS.begin(true)) {
         Serial.println("LittleFS Mount Failed");
     } else {
-        Serial.println("LittleFS Mounted Successfully. Files:");
-        File root = LittleFS.open("/");
-        File file = root.openNextFile();
-        while (file) {
-            file = root.openNextFile();
-        }
+        Serial.println("LittleFS Mounted Successfully.");
     }
 }
 
@@ -47,130 +44,79 @@ void load_settings() {
     g_kb_lang = preferences.getUChar("lang", 0);
     g_bg_color = preferences.getUInt("bg", 0x121212);
     g_brightness = preferences.getUChar("bright", 50);
+    g_num_pages = preferences.getUChar("num_pages", MAX_PAGES);
+    g_current_page = preferences.getUChar("page", 0);
 
     if (g_bg_color == 0x000000) g_bg_color = 0x121212;
     if (g_brightness < 1) g_brightness = 50;
     if (g_brightness > 100) g_brightness = 100;
     if (g_rows < 1 || g_rows > 5) g_rows = 3;
     if (g_cols < 1 || g_cols > 5) g_cols = 3;
+    if (g_num_pages < 1 || g_num_pages > MAX_PAGES) g_num_pages = MAX_PAGES;
+    if (g_current_page >= g_num_pages) g_current_page = 0;
 
-    const char* win_file = "/win_btns.bin";
-    const char* mac_file = "/mac_btns.bin";
+    const char* win_file = "/win_btns_v2.bin";
+    const char* mac_file = "/mac_btns_v2.bin";
+    const char* linux_file = "/linux_btns_v2.bin";
 
-    auto migrate_file = [](const char* path) {
-        File f = LittleFS.open(path, "r");
-        if (!f) return;
-        size_t size = f.size();
-        if (size == sizeof(LegacyButtonConfig) * MAX_BUTTONS) {
-            Serial.printf("STORAGE: Migrating %s to new format...\n", path);
-            LegacyButtonConfig old_btns[MAX_BUTTONS];
-            f.read((uint8_t*)old_btns, sizeof(old_btns));
-            f.close();
+    // Simple migration from v1 (single page) to v2 (multi page)
+    auto migrate_v1_to_v2 = [](const char* old_path, const char* new_path) {
+        if (LittleFS.exists(new_path)) return;
+        if (!LittleFS.exists(old_path)) return;
 
-            ButtonConfig new_btns[MAX_BUTTONS];
-            memset(new_btns, 0, sizeof(new_btns));
-            for (int i = 0; i < MAX_BUTTONS; i++) {
-                strncpy(new_btns[i].label, old_btns[i].label, 15);
-                strncpy(new_btns[i].value, old_btns[i].value, 127);
-                new_btns[i].type = old_btns[i].type;
-                new_btns[i].color = old_btns[i].color;
-                strncpy(new_btns[i].icon, old_btns[i].icon, 7);
-                strncpy(new_btns[i].imgPath, old_btns[i].imgPath, 31);
-            }
+        Serial.printf("STORAGE: Migrating %s to %s...\n", old_path, new_path);
+        File f_old = LittleFS.open(old_path, "r");
+        if (!f_old) return;
 
-            f = LittleFS.open(path, "w");
-            if (f) {
-                f.write((uint8_t*)new_btns, sizeof(new_btns));
-                f.close();
-                Serial.println("STORAGE: Migration successful.");
-            }
-        } else {
-            f.close();
+        ButtonConfig* temp_v2 = (ButtonConfig*)malloc(sizeof(ButtonConfig) * MAX_TOTAL_BUTTONS);
+        if (!temp_v2) {
+            f_old.close();
+            return;
         }
+        memset(temp_v2, 0, sizeof(ButtonConfig) * MAX_TOTAL_BUTTONS);
+        
+        // Default values for all buttons
+        for(int i=0; i<MAX_TOTAL_BUTTONS; i++) {
+            temp_v2[i].color = 0x333333;
+            sprintf(temp_v2[i].label, "Btn %d", i+1);
+        }
+
+        // Load page 1 from old file
+        f_old.read((uint8_t*)temp_v2, BUTTONS_PER_PAGE * sizeof(ButtonConfig));
+        f_old.close();
+
+        File f_new = LittleFS.open(new_path, "w");
+        if (f_new) {
+            f_new.write((uint8_t*)temp_v2, sizeof(ButtonConfig) * MAX_TOTAL_BUTTONS);
+            f_new.close();
+            Serial.println("STORAGE: Migration V2 successful.");
+        }
+        free(temp_v2);
     };
 
-    migrate_file(win_file);
-    migrate_file(mac_file);
+    migrate_v1_to_v2("/win_btns.bin", win_file);
+    migrate_v1_to_v2("/mac_btns.bin", mac_file);
+    migrate_v1_to_v2("/linux_btns.bin", linux_file);
 
-    if (!preferences.getBool("init_os_v4", false)) {
-        bool has_win = LittleFS.exists(win_file);
-        bool has_mac = LittleFS.exists(mac_file);
+    const char* active_file;
+    if (g_target_os == OS_WINDOWS) active_file = win_file;
+    else if (g_target_os == OS_MACOS) active_file = mac_file;
+    else active_file = linux_file;
 
-        if (has_win && has_mac) {
-            preferences.putBool("init_os_v4", true);
-            Serial.println("STORAGE: init_os_v4 flag recovered (bin files exist).");
-        } else {
-            Serial.println("Initial Profile Setup (v4 LittleFS): Migrating...");
-            has_win = false; has_mac = false;
-
-            auto set_defaults = []() {
-                for (int i = 0; i < MAX_BUTTONS; i++) {
-                    memset(&g_configs[i], 0, sizeof(ButtonConfig));
-                    g_configs[i].color = 0x333333;
-                    strncpy(g_configs[i].label, "Button", 15);
-                }
-            };
-
-            set_defaults();
-            if (preferences.getBytes("w_pA", &g_configs[0], 10 * sizeof(ButtonConfig)) > 0) {
-                preferences.getBytes("w_pB", &g_configs[10], 10 * sizeof(ButtonConfig));
-            } else {
-                for (int i = 0; i < MAX_BUTTONS; i++) {
-                    char k1[8], k2[8];
-                    sprintf(k1, "b%d", i);
-                    sprintf(k2, "wb%d", i);
-                    if (preferences.getBytes(k2, &g_configs[i], sizeof(ButtonConfig)) == 0)
-                        preferences.getBytes(k1, &g_configs[i], sizeof(ButtonConfig));
-                }
-            }
-            {
-                File f = LittleFS.open(win_file, "w");
-                if (f) {
-                    f.write((uint8_t*)g_configs, sizeof(g_configs));
-                    f.close();
-                }
-            }
-
-            set_defaults();
-            if (preferences.getBytes("m_pA", &g_configs[0], 10 * sizeof(ButtonConfig)) > 0) {
-                preferences.getBytes("m_pB", &g_configs[10], 10 * sizeof(ButtonConfig));
-            } else {
-                for (int i = 0; i < MAX_BUTTONS; i++) {
-                    char k3[8];
-                    sprintf(k3, "mb%d", i);
-                    preferences.getBytes(k3, &g_configs[i], sizeof(ButtonConfig));
-                }
-            }
-            {
-                File f = LittleFS.open(mac_file, "w");
-                if (f) {
-                    f.write((uint8_t*)g_configs, sizeof(g_configs));
-                    f.close();
-                }
-            }
-
-            preferences.putBool("init_os_v4", true);
-            Serial.println("STORAGE: Migration to LittleFS files complete.");
-        }
-    }
-
-    const char* active_file = (g_target_os == OS_WINDOWS ? win_file : mac_file);
     File f = LittleFS.open(active_file, "r");
     if (f) {
         size_t read = f.read((uint8_t*)g_configs, sizeof(g_configs));
         f.close();
         if (read != sizeof(g_configs)) {
-            Serial.println("FAIL (size mismatch)");
+            Serial.println("STORAGE: size mismatch, resetting");
             goto load_defaults;
         }
-        Serial.println("OK");
     } else {
-        Serial.println("NOT FOUND");
     load_defaults:
-        for (int i = 0; i < MAX_BUTTONS; i++) {
+        for (int i = 0; i < MAX_TOTAL_BUTTONS; i++) {
             memset(&g_configs[i], 0, sizeof(ButtonConfig));
             g_configs[i].color = 0x333333;
-            strncpy(g_configs[i].label, "Button", 15);
+            sprintf(g_configs[i].label, "Btn %d", i+1);
         }
     }
 
@@ -178,7 +124,7 @@ void load_settings() {
     preferences.getString("wpass", g_wifi_pass, 63);
     preferences.end();
 
-    if (strlen(g_wifi_ssid) > 0) {
+    if (strlen(g_wifi_ssid) > 0 && WiFi.status() != WL_CONNECTED) {
         WiFi.begin(g_wifi_ssid, g_wifi_pass);
     }
 }
@@ -191,18 +137,22 @@ void save_settings(bool saveButtons) {
     preferences.putUChar("cols", g_cols);
     preferences.putUChar("os", g_target_os);
     preferences.putUChar("lang", g_kb_lang);
+    preferences.putUChar("num_pages", g_num_pages);
+    preferences.putUChar("page", g_current_page);
     preferences.putString("wssid", g_wifi_ssid);
     preferences.putString("wpass", g_wifi_pass);
     preferences.end();
 
     if (saveButtons) {
-        const char* active_file = (g_target_os == OS_WINDOWS ? "/win_btns.bin" : "/mac_btns.bin");
+        const char* active_file;
+        if (g_target_os == OS_WINDOWS) active_file = "/win_btns_v2.bin";
+        else if (g_target_os == OS_MACOS) active_file = "/mac_btns_v2.bin";
+        else active_file = "/linux_btns_v2.bin";
+
         File f = LittleFS.open(active_file, "w");
         if (f) {
             f.write((uint8_t*)g_configs, sizeof(g_configs));
             f.close();
-        } else {
-            Serial.printf("STORAGE ERROR: Failed to open %s for writing\n", active_file);
         }
     }
 }
