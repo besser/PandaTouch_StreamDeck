@@ -41,10 +41,13 @@ static void page_nav_cb(lv_event_t* e) {
 
 static void slider_event_cb(lv_event_t* e) {
     lv_obj_t* slider = (lv_obj_t*)lv_event_get_target(e);
-    int32_t val = lv_slider_get_value(slider);
-    pt_set_backlight((uint8_t)val, true);
-    g_brightness = (uint8_t)val;
-    save_settings(false);
+    g_brightness = (uint8_t)lv_slider_get_value(slider);
+    bool released = (lv_event_get_code(e) == LV_EVENT_RELEASED);
+    // Apply backlight on every tick for smooth real-time feedback.
+    // Save pt_backlight_percent and NVS only on release to avoid blocking
+    // the render loop with repeated flash writes during drag.
+    pt_set_backlight(g_brightness, released);
+    if (released) save_settings(false);
 }
 
 static void settings_btn_cb(lv_event_t* e) {
@@ -54,6 +57,7 @@ static void settings_btn_cb(lv_event_t* e) {
 void create_main_ui() {
     lv_obj_clean(g_main_screen);
     lv_obj_set_style_bg_color(g_main_screen, lv_color_hex(g_bg_color), LV_PART_MAIN);
+    lv_obj_clear_flag(g_main_screen, LV_OBJ_FLAG_SCROLLABLE);
 
     memset(g_btns, 0, sizeof(g_btns));
     memset(g_btn_labels, 0, sizeof(g_btn_labels));
@@ -89,6 +93,7 @@ void create_main_ui() {
     lv_obj_set_style_border_width(g_grid, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(g_grid, 10, LV_PART_MAIN);
     lv_obj_set_style_pad_gap(g_grid, 10, LV_PART_MAIN);
+    lv_obj_clear_flag(g_grid, LV_OBJ_FLAG_SCROLLABLE);
 
     int btn_count = g_rows * g_cols;
     uint8_t page_offset = g_current_page * BUTTONS_PER_PAGE;
@@ -161,7 +166,11 @@ void create_main_ui() {
     lv_obj_set_size(g_slider, 150, 20);
     lv_slider_set_range(g_slider, 10, 100);
     lv_slider_set_value(g_slider, g_brightness, LV_ANIM_OFF);
+    // Prevent the vertical component of a slider drag from propagating as a
+    // scroll gesture to parent containers (g_grid, g_main_screen).
+    lv_obj_clear_flag(g_slider, LV_OBJ_FLAG_SCROLL_CHAIN_VER);
     lv_obj_add_event_cb(g_slider, slider_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+    lv_obj_add_event_cb(g_slider, slider_event_cb, LV_EVENT_RELEASED, NULL);
 
     // Page Indicator and Nav (hidden when only one page is configured)
     if (g_num_pages > 1) {
