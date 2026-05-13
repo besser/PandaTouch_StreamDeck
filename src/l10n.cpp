@@ -21,7 +21,8 @@ static const L10n g_l10n_en = {
     "Button", "- Key -",
     {"None", "OK", "Close", "Copy", "Paste", "Cut", "Play", "Pause", "PlayPause", "Mute", "Settings", "Home", "Save", "Edit", "File", "Dir", "Plus", "Prev", "Next", "Stop"},
     "Background Color", "Icon", "Custom Image",
-    "Pages", "Select Number of Pages"
+    "Pages", "Select Number of Pages",
+    "Sleep Timeout", "Select Sleep Timeout"
 };
 
 static const L10n g_l10n_es = {
@@ -44,7 +45,8 @@ static const L10n g_l10n_es = {
     "Boton", "- Tecla -",
     {"Ninguno", "Aceptar", "Cerrar", "Copiar", "Pegar", "Cortar", "Reproducir", "Pausa", "Play/Pausa", "Silencio", "Ajustes", "Inicio", "Guardar", "Editar", "Archivo", "Carpeta", "Mas", "Anterior", "Siguiente", "Parar"},
     "Color de Fondo", "Icono", "Imagen Personalizada",
-    "Paginas", "Seleccionar Numero de Paginas"
+    "Paginas", "Seleccionar Numero de Paginas",
+    "Suspension", "Seleccionar Tiempo de Suspension"
 };
 
 const char* g_sym_names[20] = {"None", "OK", "Close", "Copy", "Paste", "Cut", "Play", "Pause", "PlayPause", "Mute", "Settings", "Home", "Save", "Edit", "File", "Dir", "Plus", "Prev", "Next", "Stop"};

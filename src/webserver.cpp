@@ -51,6 +51,7 @@ static void build_config_json(AsyncWebServerRequest* request) {
     doc["lang"] = g_kb_lang;
     doc["max_pages"] = MAX_PAGES;
     doc["num_pages"] = g_num_pages;
+    doc["sleep_timeout"] = g_sleep_timeout;
     doc["btns_per_page"] = BUTTONS_PER_PAGE;
 
     JsonArray btns = doc["buttons"].to<JsonArray>();
@@ -176,6 +177,10 @@ void init_webserver() {
                 g_num_pages = np;
                 if (g_current_page >= g_num_pages) g_current_page = 0;
             }
+        }
+        if (request->hasParam("sleep_timeout", true)) {
+            uint8_t st = (uint8_t)request->getParam("sleep_timeout", true)->value().toInt();
+            if (st <= 5) g_sleep_timeout = st;
         }
 
         for (int i = 0; i < MAX_TOTAL_BUTTONS; i++) {

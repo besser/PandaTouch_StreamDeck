@@ -23,6 +23,7 @@ char g_wifi_pass[64] = "";
 uint8_t g_kb_lang = LANG_US;
 uint8_t g_brightness = 50;
 uint8_t g_num_pages = MAX_PAGES;
+uint8_t g_sleep_timeout = 0;
 String g_wifi_status = "Disconnected";
 String g_ip_addr = "0.0.0.0";
 
@@ -45,6 +46,7 @@ void load_settings() {
     g_bg_color = preferences.getUInt("bg", 0x121212);
     g_brightness = preferences.getUChar("bright", 50);
     g_num_pages = preferences.getUChar("num_pages", MAX_PAGES);
+    g_sleep_timeout = preferences.getUChar("sleep_to", 0);
     g_current_page = preferences.getUChar("page", 0);
 
     if (g_bg_color == 0x000000) g_bg_color = 0x121212;
@@ -138,6 +140,7 @@ void save_settings(bool saveButtons) {
     preferences.putUChar("os", g_target_os);
     preferences.putUChar("lang", g_kb_lang);
     preferences.putUChar("num_pages", g_num_pages);
+    preferences.putUChar("sleep_to", g_sleep_timeout);
     preferences.putUChar("page", g_current_page);
     preferences.putString("wssid", g_wifi_ssid);
     preferences.putString("wpass", g_wifi_pass);

@@ -47,6 +47,8 @@ static void settings_wifi_btn_cb(lv_event_t* e);
 static void settings_lang_btn_cb(lv_event_t* e);
 static void settings_pages_btn_cb(lv_event_t* e);
 static void pages_selected(const char* txt);
+static void settings_sleep_btn_cb(lv_event_t* e);
+static void sleep_selected(const char* txt);
 static void edit_btn_select_cb(lv_event_t* e);
 static void grid_selected(const char* txt);
 static void os_selected(const char* txt);
@@ -89,6 +91,9 @@ void create_settings_ui() {
 
         lv_obj_t* pages_btn = lv_list_add_btn(list, "\xEF\x80\xBA", l->pages_label);
         lv_obj_add_event_cb(pages_btn, settings_pages_btn_cb, LV_EVENT_CLICKED, NULL);
+
+        lv_obj_t* sleep_btn = lv_list_add_btn(list, "\xEF\x80\x97", l->sleep_label);
+        lv_obj_add_event_cb(sleep_btn, settings_sleep_btn_cb, LV_EVENT_CLICKED, NULL);
 
         int btn_count = g_rows * g_cols;
         for (int i = 0; i < btn_count; i++) {
@@ -370,6 +375,21 @@ static void pages_selected(const char* txt) {
 static void settings_pages_btn_cb(lv_event_t* e) {
     const char* page_opts[] = {"1", "2", "3", "4", "5"};
     create_selection_screen(get_l10n()->select_pages, "\xEF\x80\xBA", page_opts, MAX_PAGES, pages_selected);
+}
+
+static void sleep_selected(const char* txt) {
+    if      (strcmp(txt, "Disabled") == 0) g_sleep_timeout = 0;
+    else if (strcmp(txt, "30 sec")   == 0) g_sleep_timeout = 1;
+    else if (strcmp(txt, "1 min")    == 0) g_sleep_timeout = 2;
+    else if (strcmp(txt, "2 min")    == 0) g_sleep_timeout = 3;
+    else if (strcmp(txt, "5 min")    == 0) g_sleep_timeout = 4;
+    else if (strcmp(txt, "10 min")   == 0) g_sleep_timeout = 5;
+    save_settings(false);
+}
+
+static void settings_sleep_btn_cb(lv_event_t* e) {
+    static const char* sleep_opts[] = {"Disabled", "30 sec", "1 min", "2 min", "5 min", "10 min"};
+    create_selection_screen(get_l10n()->select_sleep, "\xEF\x80\x97", sleep_opts, 6, sleep_selected);
 }
 
 static void edit_btn_select_cb(lv_event_t* e) {

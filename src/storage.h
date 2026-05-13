@@ -25,6 +25,7 @@ extern char g_wifi_pass[64];
 extern uint8_t g_kb_lang;
 extern uint8_t g_brightness;
 extern uint8_t g_num_pages;
+extern uint8_t g_sleep_timeout;
 extern String g_wifi_status;
 extern String g_ip_addr;
 

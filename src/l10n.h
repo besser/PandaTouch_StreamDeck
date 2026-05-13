@@ -64,6 +64,8 @@ struct L10n {
     const char* image_title;
     const char* pages_label;
     const char* select_pages;
+    const char* sleep_label;
+    const char* select_sleep;
 };
 
 const L10n* get_l10n();
