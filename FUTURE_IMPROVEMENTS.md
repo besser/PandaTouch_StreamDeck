@@ -4,10 +4,11 @@ This file tracks planned features and architectural enhancements for future deve
 
 ## 📋 Planned Features
 
-### 1. Múltiplas Páginas (Perfis) - [IN PROGRESS]
+### 1. Múltiplas Páginas (Perfis) - [DONE]
 - Allow users to have more than one grid of buttons.
 - Support navigation between pages (swipe or dedicated buttons).
 - Target: At least 5 pages (100 buttons total).
+- Implemented: configurable 1–5 pages via Settings screen; pagination controls hidden when only 1 page is set.
 
 ### 2. Ícones Dinâmicos
 - Enable custom icon uploads via the Web Dashboard.
