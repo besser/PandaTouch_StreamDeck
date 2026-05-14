@@ -555,5 +555,6 @@ static void save_edit_cb(lv_event_t* e) {
     lv_scr_load(g_main_screen);
     if (g_edit_screen)        { lv_obj_del_async(g_edit_screen);        g_edit_screen        = nullptr; }
     if (g_button_list_screen) { lv_obj_del_async(g_button_list_screen); g_button_list_screen = nullptr; }
+    if (g_sleep_overlay) { g_sleep_overlay = nullptr; }  // lv_obj_clean will destroy it as child
     create_main_ui();
 }
