@@ -17,6 +17,7 @@ struct L10n {
     const char* type_media;
     const char* type_basic;
     const char* type_adv;
+    const char* type_disabled;
     const char* save_changes;
     const char* library;
     const char* upload;

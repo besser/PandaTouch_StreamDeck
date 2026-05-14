@@ -87,6 +87,7 @@ static void build_l10n_json(AsyncWebServerRequest* request) {
     doc["type_media"] = l->type_media;
     doc["type_basic"] = l->type_basic;
     doc["type_adv"] = l->type_adv;
+    doc["type_disabled"] = l->type_disabled;
     doc["save_changes"] = l->save_changes;
     doc["library"] = l->library;
     doc["upload"] = l->upload;

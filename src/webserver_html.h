@@ -19,16 +19,21 @@ body{background:#121212;color:white}
 .combo-builder{background:#2a2a2a;border-radius:4px;padding:5px;margin-top:5px;border:1px solid #444}
 </style>
 </head>
-<body class='container py-4'>
-<div class='d-flex justify-content-between align-items-center mb-4'>
-<h2>PandaDeck Dash <span class='badge bg-secondary' style='font-size:0.5em'>v__VERSION__</span></h2>
-<div class='d-flex align-items-center gap-3'>
-<div class='d-flex align-items-center gap-2'><label id="lblKb">Keyboard:</label><select id='langSelect' class='form-select form-select-sm' style='width:105px'><option value='0'>English</option><option value='1'>Espanol</option></select></div>
-<div class='d-flex align-items-center gap-2'><label id="lblOs">OS:</label><select id='osSelect' class='form-select form-select-sm' style='width:105px'><option value='0'>Windows</option><option value='1'>macOS</option><option value='2'>Linux</option></select></div>
-<div class='d-flex align-items-center gap-2'><label id="lblPage">Page:</label><select id='pageSelect' class='form-select form-select-sm' style='width:100px'></select></div>
-<div class='d-flex align-items-center gap-2'><label id="lblGrid">Grid:</label><select id='gridSelect' class='form-select form-select-sm' style='width:100px'><option value='2x2'>2x2</option><option value='3x2'>3x2</option><option value='3x3'>3x3</option><option value='4x3'>4x3</option><option value='5x3'>5x3</option></select></div>
-<div class='d-flex align-items-center gap-2'><label id="lblBg">Background:</label><input type='color' id='globalBg' name='bg' form='configForm' class='form-control form-control-color' style='height:35px'></div>
-</div></div>
+<body class='container-fluid px-4 py-3'>
+<div class='d-flex align-items-center justify-content-between mb-2'>
+ <h4 class='mb-0'>PandaDeck Dash <span class='badge bg-secondary' style='font-size:0.6em'>v__VERSION__</span></h4>
+</div>
+<div class='card p-2 mb-3'>
+ <div class='d-flex flex-wrap align-items-center gap-3'>
+  <div class='d-flex align-items-center gap-1'><label class='mb-0 text-nowrap' id="lblKb">Keyboard:</label><select id='langSelect' class='form-select form-select-sm' style='width:100px'><option value='0'>English</option><option value='1'>Espanol</option></select></div>
+  <div class='d-flex align-items-center gap-1'><label class='mb-0 text-nowrap' id="lblOs">OS:</label><select id='osSelect' class='form-select form-select-sm' style='width:100px'><option value='0'>Windows</option><option value='1'>macOS</option><option value='2'>Linux</option></select></div>
+  <div class='d-flex align-items-center gap-1'><label class='mb-0 text-nowrap' id="lblNumPages">Pages:</label><select id='numPagesSelect' class='form-select form-select-sm' style='width:65px'><option value='1'>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option><option value='5'>5</option></select></div>
+  <div class='d-flex align-items-center gap-1'><label class='mb-0 text-nowrap' id="lblPage">Page:</label><select id='pageSelect' class='form-select form-select-sm' style='width:90px'></select></div>
+  <div class='d-flex align-items-center gap-1'><label class='mb-0 text-nowrap' id="lblGrid">Grid:</label><select id='gridSelect' class='form-select form-select-sm' style='width:90px'><option value='2x2'>2×2</option><option value='3x2'>3×2</option><option value='3x3'>3×3</option><option value='4x3'>4×3</option><option value='5x3'>5×3</option></select></div>
+  <div class='d-flex align-items-center gap-1'><label class='mb-0 text-nowrap' id="lblBg">Background:</label><input type='color' id='globalBg' name='bg' form='configForm' class='form-control form-control-color' style='height:31px;width:46px'></div>
+  <div class='d-flex align-items-center gap-1'><label class='mb-0 text-nowrap' id="lblSleep">Sleep:</label><select id='sleepSelect' class='form-select form-select-sm' style='width:105px'><option value='0'>Disabled</option><option value='1'>30 sec</option><option value='2'>1 min</option><option value='3'>2 min</option><option value='4'>5 min</option><option value='5'>10 min</option></select></div>
+ </div>
+</div>
 
 <div class='row'><div class='col-md-9'>
 <div class='card p-3 mb-4'><h5 id="lblBtnConfig">Button Configuration</h5>
@@ -65,7 +70,8 @@ function toggleBuilder(i){
  const t=document.getElementById('type'+i).value;
  document.getElementById('builder'+i).classList.toggle('d-none',t!='3');
  document.getElementById('basicHint'+i).classList.toggle('d-none',t!='2');
- if(t=='3') updC(i);
+ document.getElementById('val'+i).disabled=(t==='4');
+ if(t==='3') updC(i);
 }
 
 function updC(i){
@@ -110,10 +116,14 @@ async function load(){
   document.getElementById('gridSelect').value=d.cols+'x'+d.rows;
   document.getElementById('osSelect').value=d.os;
   document.getElementById('langSelect').value=d.lang;
-  
+  document.getElementById('sleepSelect').value=d.sleep_timeout||0;
+  document.getElementById('numPagesSelect').value=d.num_pages||5;
+
+  const numP=d.num_pages||d.max_pages||5;
   const ps=document.getElementById('pageSelect');
-  if(ps.options.length===0){
-   for(let p=0;p<d.max_pages;p++) ps.innerHTML+=`<option value='${p}'>Page ${p+1}</option>`;
+  if(ps.options.length!==numP){
+   ps.innerHTML='';
+   for(let p=0;p<numP;p++) ps.innerHTML+=`<option value='${p}'>Page ${p+1}</option>`;
   }
 
   updateVisibleCards(d.rows,d.cols);
@@ -157,6 +167,24 @@ document.getElementById('langSelect').onchange=async(e)=>{
  const fd=new FormData();fd.append('lang',e.target.value);
  await fetch('/api/save',{method:'POST',body:fd});
  location.reload();
+};
+
+document.getElementById('sleepSelect').onchange=async(e)=>{
+ const fd=new FormData();fd.append('sleep_timeout',e.target.value);
+ await fetch('/api/save',{method:'POST',body:fd});
+};
+
+document.getElementById('numPagesSelect').onchange=async(e)=>{
+ const numP=parseInt(e.target.value);
+ const fd=new FormData();fd.append('num_pages',numP);
+ await fetch('/api/save',{method:'POST',body:fd});
+ const ps=document.getElementById('pageSelect');
+ const curPage=parseInt(ps.value)||0;
+ ps.innerHTML='';
+ for(let p=0;p<numP;p++) ps.innerHTML+=`<option value='${p}'>Page ${p+1}</option>`;
+ ps.value=(curPage<numP)?curPage:0;
+ const[c,r]=document.getElementById('gridSelect').value.split('x').map(Number);
+ updateVisibleCards(r,c);
 };
 
 document.getElementById('gridSelect').onchange=(e)=>{
@@ -270,12 +298,13 @@ document.addEventListener('DOMContentLoaded',async()=>{
   div.innerHTML=`
    <b class='mb-2'>Button ${i+1}</b>
    <input type='text' name='b${i}l' class='form-control form-control-sm mb-1' placeholder='Name' maxlength='15'>
-   <input type='text' name='b${i}v' id='val${i}' class='form-control form-control-sm mb-1 text-uppercase' placeholder='Command' maxlength='255'>
+   <input type='text' name='b${i}v' id='val${i}' class='form-control form-control-sm mb-1' placeholder='Command' maxlength='255'>
    <select name='b${i}t' id='type${i}' class='form-select form-select-sm mb-1' onchange='toggleBuilder(${i})'>
     <option value='0'>App (Win+R / Cmd+Space / Alt+F2)</option>
     <option value='1'>Media Key</option>
     <option value='2'>Basic Combo (Ctrl/Cmd + Key)</option>
     <option value='3'>Advanced Combo</option>
+    <option value='4'>Disabled</option>
    </select>
    <div id='basicHint${i}' class='small text-secondary mb-1 d-none' style='font-size:10px'>Basic combination uses Ctrl (Win) or Cmd (Mac) plus one key.</div>
    <div id='builder${i}' class='combo-builder d-none'>

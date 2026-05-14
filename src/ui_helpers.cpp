@@ -36,6 +36,7 @@ void create_selection_screen(const char* title, const char* icon,
     ctx->cb = on_select;
 
     ctx->screen = lv_obj_create(NULL);
+    lv_obj_clear_flag(ctx->screen, LV_OBJ_FLAG_SCROLLABLE);
     lv_scr_load(ctx->screen);
     lv_obj_set_style_bg_color(ctx->screen, lv_color_hex(g_bg_color), LV_PART_MAIN);
 
@@ -47,6 +48,7 @@ void create_selection_screen(const char* title, const char* icon,
     lv_obj_t* list = lv_list_create(ctx->screen);
     lv_obj_set_size(list, 400, 320);
     lv_obj_align(list, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_clear_flag(list, LV_OBJ_FLAG_SCROLL_CHAIN_VER);
 
     for (uint8_t i = 0; i < count; i++) {
         lv_obj_t* btn = lv_list_add_btn(list, icon, options[i]);

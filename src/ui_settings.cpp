@@ -11,6 +11,7 @@
 static lv_obj_t* g_settings_screen = nullptr;
 static lv_obj_t* g_edit_screen = nullptr;
 static lv_obj_t* g_wifi_screen = nullptr;
+static lv_obj_t* g_button_list_screen = nullptr;
 static bool g_editing_bg = false;
 static uint8_t g_editing_idx = 0;
 static bool g_settings_needs_rebuild = true;
@@ -49,6 +50,8 @@ static void settings_pages_btn_cb(lv_event_t* e);
 static void pages_selected(const char* txt);
 static void settings_sleep_btn_cb(lv_event_t* e);
 static void sleep_selected(const char* txt);
+static void settings_buttons_btn_cb(lv_event_t* e);
+static void back_to_settings_cb(lv_event_t* e);
 static void edit_btn_select_cb(lv_event_t* e);
 static void grid_selected(const char* txt);
 static void os_selected(const char* txt);
@@ -63,6 +66,7 @@ void create_settings_ui() {
         }
 
         g_settings_screen = lv_obj_create(NULL);
+        lv_obj_clear_flag(g_settings_screen, LV_OBJ_FLAG_SCROLLABLE);
         lv_obj_set_style_bg_color(g_settings_screen, lv_color_hex(g_bg_color), LV_PART_MAIN);
 
         lv_obj_t* title = lv_label_create(g_settings_screen);
@@ -73,6 +77,7 @@ void create_settings_ui() {
         lv_obj_t* list = lv_list_create(g_settings_screen);
         lv_obj_set_size(list, 600, 360);
         lv_obj_align(list, LV_ALIGN_TOP_MID, 0, 45);
+        lv_obj_clear_flag(list, LV_OBJ_FLAG_SCROLL_CHAIN_VER);
 
         lv_obj_t* bg_btn = lv_list_add_btn(list, "\xEF\x80\xBE", l->global_bg);
         lv_obj_add_event_cb(bg_btn, settings_bg_btn_cb, LV_EVENT_CLICKED, NULL);
@@ -95,13 +100,8 @@ void create_settings_ui() {
         lv_obj_t* sleep_btn = lv_list_add_btn(list, "\xEF\x80\x97", l->sleep_label);
         lv_obj_add_event_cb(sleep_btn, settings_sleep_btn_cb, LV_EVENT_CLICKED, NULL);
 
-        int btn_count = g_rows * g_cols;
-        for (int i = 0; i < btn_count; i++) {
-            char buf[64];
-            sprintf(buf, "%s %d: %s", (g_kb_lang == LANG_ES ? "Boton" : "Button"), (i + 1), g_configs[i].label);
-            lv_obj_t* btn = lv_list_add_btn(list, "\xEF\x8C\x84", buf);
-            lv_obj_add_event_cb(btn, edit_btn_select_cb, LV_EVENT_CLICKED, (void*)(uintptr_t)i);
-        }
+        lv_obj_t* btns_item = lv_list_add_btn(list, "\xEF\x8C\x84", l->btn_config);
+        lv_obj_add_event_cb(btns_item, settings_buttons_btn_cb, LV_EVENT_CLICKED, NULL);
 
         lv_obj_t* back = lv_btn_create(g_settings_screen);
         lv_obj_set_size(back, 140, 50);
@@ -120,7 +120,9 @@ void create_settings_ui() {
 void create_edit_ui(uint8_t idx) {
     const L10n* l = get_l10n();
     if (!g_editing_bg) g_editing_idx = idx;
+    if (g_edit_screen) { lv_obj_del(g_edit_screen); g_edit_screen = nullptr; }
     g_edit_screen = lv_obj_create(NULL);
+    lv_obj_clear_flag(g_edit_screen, LV_OBJ_FLAG_SCROLLABLE);
     lv_scr_load(g_edit_screen);
     lv_obj_set_style_bg_color(g_edit_screen, lv_color_hex(g_bg_color), LV_PART_MAIN);
 
@@ -162,7 +164,7 @@ void create_edit_ui(uint8_t idx) {
         lv_obj_align(l2, LV_ALIGN_TOP_LEFT, 20, 105);
         g_edit_data.dd_type = lv_dropdown_create(g_edit_screen);
         lv_obj_set_size(g_edit_data.dd_type, 180, 40);
-        String type_opts = String(l->type_app) + "\n" + l->type_media + "\n" + l->type_basic + "\n" + l->type_adv;
+        String type_opts = String(l->type_app) + "\n" + l->type_media + "\n" + l->type_basic + "\n" + l->type_adv + "\n" + l->type_disabled;
         lv_dropdown_set_options(g_edit_data.dd_type, type_opts.c_str());
         lv_obj_align(g_edit_data.dd_type, LV_ALIGN_TOP_LEFT, 20, 125);
         lv_dropdown_set_selected(g_edit_data.dd_type, g_configs[idx].type);
@@ -249,7 +251,9 @@ void create_edit_ui(uint8_t idx) {
 // ========== WiFi Screen ==========
 void create_wifi_ui() {
     const L10n* l = get_l10n();
+    if (g_wifi_screen) { lv_obj_del(g_wifi_screen); g_wifi_screen = nullptr; }
     g_wifi_screen = lv_obj_create(NULL);
+    lv_obj_clear_flag(g_wifi_screen, LV_OBJ_FLAG_SCROLLABLE);
     lv_scr_load(g_wifi_screen);
     lv_obj_set_style_bg_color(g_wifi_screen, lv_color_hex(g_bg_color), LV_PART_MAIN);
 
@@ -307,7 +311,6 @@ static void grid_selected(const char* txt) {
     else if (strcmp(txt, "4x3") == 0) { g_cols = 4; g_rows = 3; }
     else if (strcmp(txt, "5x3") == 0) { g_cols = 5; g_rows = 3; }
 
-    g_settings_needs_rebuild = true;
     save_settings();
     lv_scr_load(g_main_screen);
     create_main_ui();
@@ -333,7 +336,6 @@ static void lang_selected(const char* txt) {
     g_settings_needs_rebuild = true;
     lv_scr_load(g_main_screen);
     create_main_ui();
-    g_settings_needs_rebuild = false;
 }
 
 // ========== Settings Button Callbacks ==========
@@ -366,10 +368,56 @@ static void pages_selected(const char* txt) {
     if (n < 1 || n > MAX_PAGES) n = MAX_PAGES;
     g_num_pages = n;
     if (g_current_page >= g_num_pages) g_current_page = 0;
-    g_settings_needs_rebuild = true;
     save_settings(false);
     lv_scr_load(g_main_screen);
     create_main_ui();
+}
+
+// ========== Button List Screen ==========
+// Separate screen for button editing so the main settings list stays short
+// (8 items, no scroll needed) and the button list can scroll freely.
+static void create_button_list_ui() {
+    const L10n* l = get_l10n();
+    if (g_button_list_screen) { lv_obj_del(g_button_list_screen); g_button_list_screen = nullptr; }
+    g_button_list_screen = lv_obj_create(NULL);
+    lv_obj_clear_flag(g_button_list_screen, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(g_button_list_screen, lv_color_hex(g_bg_color), LV_PART_MAIN);
+
+    lv_obj_t* title = lv_label_create(g_button_list_screen);
+    lv_label_set_text(title, l->btn_config);
+    lv_obj_set_style_text_font(title, &lv_font_montserrat_18, 0);
+    lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
+
+    lv_obj_t* list = lv_list_create(g_button_list_screen);
+    lv_obj_set_size(list, 600, 360);
+    lv_obj_align(list, LV_ALIGN_TOP_MID, 0, 45);
+    lv_obj_clear_flag(list, LV_OBJ_FLAG_SCROLL_CHAIN_VER);
+
+    int btn_count = g_rows * g_cols;
+    for (int i = 0; i < btn_count; i++) {
+        char buf[64];
+        sprintf(buf, "%s %d: %s", (g_kb_lang == LANG_ES ? "Boton" : "Button"), (i + 1), g_configs[i].label);
+        lv_obj_t* btn = lv_list_add_btn(list, "\xEF\x8C\x84", buf);
+        lv_obj_add_event_cb(btn, edit_btn_select_cb, LV_EVENT_CLICKED, (void*)(uintptr_t)i);
+    }
+
+    lv_obj_t* back = lv_btn_create(g_button_list_screen);
+    lv_obj_set_size(back, 140, 50);
+    lv_obj_align(back, LV_ALIGN_BOTTOM_MID, 0, -10);
+    lv_obj_t* lbl = lv_label_create(back);
+    lv_label_set_text_fmt(lbl, "\xEF\x81\x93 %s", l->back_btn);
+    lv_obj_add_event_cb(back, back_to_settings_cb, LV_EVENT_CLICKED, NULL);
+
+    lv_scr_load(g_button_list_screen);
+}
+
+static void back_to_settings_cb(lv_event_t* e) {
+    if (g_button_list_screen) { lv_obj_del_async(g_button_list_screen); g_button_list_screen = nullptr; }
+    lv_scr_load(g_settings_screen);
+}
+
+static void settings_buttons_btn_cb(lv_event_t* e) {
+    create_button_list_ui();
 }
 
 static void settings_pages_btn_cb(lv_event_t* e) {
@@ -402,6 +450,9 @@ static void edit_btn_select_cb(lv_event_t* e) {
 static void back_to_main_cb(lv_event_t* e) {
     g_editing_bg = false;
     lv_scr_load(g_main_screen);
+    if (g_edit_screen)        { lv_obj_del_async(g_edit_screen);        g_edit_screen        = nullptr; }
+    if (g_wifi_screen)        { lv_obj_del_async(g_wifi_screen);        g_wifi_screen        = nullptr; }
+    if (g_button_list_screen) { lv_obj_del_async(g_button_list_screen); g_button_list_screen = nullptr; }
     if (g_settings_needs_rebuild) {
         create_main_ui();
         g_settings_needs_rebuild = false;
@@ -419,6 +470,7 @@ static void save_wifi_cb(lv_event_t* e) {
     WiFi.begin(g_wifi_ssid, g_wifi_pass);
 
     lv_scr_load(g_main_screen);
+    if (g_wifi_screen) { lv_obj_del_async(g_wifi_screen); g_wifi_screen = nullptr; }
     refresh_main_ui();
 }
 
@@ -484,5 +536,7 @@ static void save_edit_cb(lv_event_t* e) {
     save_settings();
     g_editing_bg = false;
     lv_scr_load(g_main_screen);
+    if (g_edit_screen)        { lv_obj_del_async(g_edit_screen);        g_edit_screen        = nullptr; }
+    if (g_button_list_screen) { lv_obj_del_async(g_button_list_screen); g_button_list_screen = nullptr; }
     create_main_ui();
 }

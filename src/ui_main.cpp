@@ -148,7 +148,11 @@ void create_main_ui() {
             g_btn_labels[i] = label;
         }
 
-        lv_obj_add_event_cb(btn, btn_event_cb, LV_EVENT_CLICKED, (void*)(uintptr_t)i);
+        if (g_configs[global_idx].type == BTN_TYPE_DISABLED) {
+            lv_obj_add_state(btn, LV_STATE_DISABLED);
+        } else {
+            lv_obj_add_event_cb(btn, btn_event_cb, LV_EVENT_CLICKED, (void*)(uintptr_t)i);
+        }
     }
 
     // Bottom Navigation Bar

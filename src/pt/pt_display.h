@@ -340,6 +340,9 @@ inline void pt_setup_display(PT_LVGL_render_method_t mode = (PT_LVGL_render_meth
   lv_indev_t *indev = lv_indev_create();
   lv_indev_set_type(indev, LV_INDEV_TYPE_POINTER);
   lv_indev_set_read_cb(indev, pt_touchpad_read);
+  // Default scroll limit is 10 px (~1.4 mm at this screen density), which
+  // is too sensitive: any tiny finger wobble registers as a click instead of
+  // a scroll gesture. 30 px (~4 mm) is comfortable for intentional scrolls.
 }
 
 /**

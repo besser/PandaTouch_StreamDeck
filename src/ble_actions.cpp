@@ -168,6 +168,14 @@ void handle_button_action(uint8_t idx) {
     if (idx >= MAX_TOTAL_BUTTONS) return;
     ButtonConfig& cfg = g_configs[idx];
 
+    if (cfg.type == BTN_TYPE_DISABLED) return;
+
+    // Skip if no command is configured (empty or whitespace-only value).
+    // Prevents BTN_TYPE_APP from firing Win+R / ENTER with no target.
+    const char* v = cfg.value;
+    while (*v == ' ' || *v == '\t') v++;
+    if (*v == '\0') return;
+
     if (cfg.type == BTN_TYPE_APP) {
         if (g_target_os == OS_WINDOWS) {
             bleKeyboard.press(KEY_LEFT_GUI);

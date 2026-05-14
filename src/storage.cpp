@@ -77,10 +77,10 @@ void load_settings() {
         }
         memset(temp_v2, 0, sizeof(ButtonConfig) * MAX_TOTAL_BUTTONS);
         
-        // Default values for all buttons
+        // Default values for all buttons (pages beyond page 1)
         for(int i=0; i<MAX_TOTAL_BUTTONS; i++) {
             temp_v2[i].color = 0x333333;
-            sprintf(temp_v2[i].label, "Btn %d", i+1);
+            temp_v2[i].type  = BTN_TYPE_DISABLED;
         }
 
         // Load page 1 from old file
@@ -118,7 +118,7 @@ void load_settings() {
         for (int i = 0; i < MAX_TOTAL_BUTTONS; i++) {
             memset(&g_configs[i], 0, sizeof(ButtonConfig));
             g_configs[i].color = 0x333333;
-            sprintf(g_configs[i].label, "Btn %d", i+1);
+            g_configs[i].type  = BTN_TYPE_DISABLED;
         }
     }
 

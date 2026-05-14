@@ -14,7 +14,8 @@ enum ButtonType {
     BTN_TYPE_APP = 0,
     BTN_TYPE_MEDIA,
     BTN_TYPE_BASIC_COMBO,
-    BTN_TYPE_ADV_COMBO
+    BTN_TYPE_ADV_COMBO,
+    BTN_TYPE_DISABLED
 };
 
 enum TargetOS {

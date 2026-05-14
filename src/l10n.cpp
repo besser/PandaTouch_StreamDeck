@@ -4,7 +4,7 @@
 static const L10n g_l10n_en = {
     "PandaDeck Dash", "Keyboard:", "OS:", "Grid:", "Background:",
     "Button Configuration", "Name", "Command",
-    "App (Win+R / Cmd+Space)", "Media Key", "Basic Combo (Ctrl/Cmd + Key)", "Advanced Combo",
+    "App (Win+R / Cmd+Space)", "Media Key", "Basic Combo (Ctrl/Cmd + Key)", "Advanced Combo", "Disabled",
     "Save Changes", "Library", "Upload",
     "Backup & Restore", "Download Backup", "Restore Backup",
     "Firmware OTA", "Select .bin file to update the device.", "Update",
@@ -28,7 +28,7 @@ static const L10n g_l10n_en = {
 static const L10n g_l10n_es = {
     "PandaDeck Dash", "Teclado:", "SO:", "Cuadricula:", "Fondo:",
     "Configuracion de Botones", "Nombre", "Comando",
-    "App (Win+R / Cmd+Space)", "Multimedia", "Combo Basico (Ctrl/Cmd + Tecla)", "Combo Avanzado",
+    "App (Win+R / Cmd+Space)", "Multimedia", "Combo Basico (Ctrl/Cmd + Tecla)", "Combo Avanzado", "Desabilitado",
     "Guardar Cambios", "Libreria", "Subir",
     "Copia de Seguridad", "Descargar Backup", "Restaurar Backup",
     "Firmware OTA", "Selecciona archivo .bin para actualizar el dispositivo.", "Actualizar",
