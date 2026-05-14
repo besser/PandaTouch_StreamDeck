@@ -421,7 +421,9 @@ static void create_button_list_ui() {
 
 static void back_to_settings_cb(lv_event_t* e) {
     if (g_button_list_screen) { lv_obj_del_async(g_button_list_screen); g_button_list_screen = nullptr; }
-    lv_scr_load(g_settings_screen);
+    if (g_settings_screen) {
+        lv_scr_load(g_settings_screen);
+    }
 }
 
 static void settings_buttons_btn_cb(lv_event_t* e) {
