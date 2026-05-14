@@ -399,11 +399,13 @@ static void create_button_list_ui() {
     lv_obj_clear_flag(list, LV_OBJ_FLAG_SCROLL_CHAIN_VER);
 
     int btn_count = g_rows * g_cols;
+    uint8_t page_offset = g_current_page * BUTTONS_PER_PAGE;
     for (int i = 0; i < btn_count; i++) {
+        uint8_t global_idx = page_offset + i;
         char buf[64];
-        sprintf(buf, "%s %d: %s", (g_kb_lang == LANG_ES ? "Boton" : "Button"), (i + 1), g_configs[i].label);
+        sprintf(buf, "%s %d: %s", (g_kb_lang == LANG_ES ? "Boton" : "Button"), (i + 1), g_configs[global_idx].label);
         lv_obj_t* btn = lv_list_add_btn(list, "\xEF\x8C\x84", buf);
-        lv_obj_add_event_cb(btn, edit_btn_select_cb, LV_EVENT_CLICKED, (void*)(uintptr_t)i);
+        lv_obj_add_event_cb(btn, edit_btn_select_cb, LV_EVENT_CLICKED, (void*)(uintptr_t)global_idx);
     }
 
     lv_obj_t* back = lv_btn_create(g_button_list_screen);
