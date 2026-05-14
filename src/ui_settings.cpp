@@ -211,6 +211,7 @@ void create_edit_ui(uint8_t idx) {
         lv_slider_set_range(*slider, 0, 255);
         lv_slider_set_value(*slider, val, LV_ANIM_OFF);
         lv_obj_set_style_bg_color(*slider, color, LV_PART_KNOB);
+        lv_obj_clear_flag(*slider, LV_OBJ_FLAG_SCROLL_CHAIN_VER);
         lv_obj_add_event_cb(*slider, color_slider_cb, LV_EVENT_VALUE_CHANGED, NULL);
     };
 
