@@ -339,6 +339,7 @@ static void lang_selected(const char* txt) {
     load_settings();
     g_settings_needs_rebuild = true;
     lv_scr_load(g_main_screen);
+    if (g_sleep_overlay) { g_sleep_overlay = nullptr; }  // lv_obj_clean will destroy it as child
     create_main_ui();
 }
 
