@@ -481,7 +481,9 @@ static void back_to_main_cb(lv_event_t* e) {
 
 static void save_wifi_cb(lv_event_t* e) {
     strncpy(g_wifi_ssid, lv_textarea_get_text(g_wifi_data.ta_ssid), 31);
+    g_wifi_ssid[31] = '\0';
     strncpy(g_wifi_pass, lv_textarea_get_text(g_wifi_data.ta_pass), 63);
+    g_wifi_pass[63] = '\0';
 
     save_settings();
     WiFi.disconnect();
