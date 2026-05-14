@@ -1,4 +1,5 @@
 #include "ui_settings.h"
+#include "streamdeck.h"
 #include "ui_main.h"
 #include "ui_helpers.h"
 #include "storage.h"
@@ -211,6 +212,7 @@ void create_edit_ui(uint8_t idx) {
         lv_slider_set_range(*slider, 0, 255);
         lv_slider_set_value(*slider, val, LV_ANIM_OFF);
         lv_obj_set_style_bg_color(*slider, color, LV_PART_KNOB);
+        lv_obj_clear_flag(*slider, LV_OBJ_FLAG_SCROLL_CHAIN_VER);
         lv_obj_add_event_cb(*slider, color_slider_cb, LV_EVENT_VALUE_CHANGED, NULL);
     };
 
@@ -313,6 +315,7 @@ static void grid_selected(const char* txt) {
 
     save_settings();
     lv_scr_load(g_main_screen);
+    if (g_sleep_overlay) { g_sleep_overlay = nullptr; }  // lv_obj_clean will destroy it as child
     create_main_ui();
 }
 
@@ -324,6 +327,7 @@ static void os_selected(const char* txt) {
     save_settings(false);
     load_settings();
     lv_scr_load(g_main_screen);
+    if (g_sleep_overlay) { g_sleep_overlay = nullptr; }  // lv_obj_clean will destroy it as child
     create_main_ui();
 }
 
@@ -370,6 +374,7 @@ static void pages_selected(const char* txt) {
     if (g_current_page >= g_num_pages) g_current_page = 0;
     save_settings(false);
     lv_scr_load(g_main_screen);
+    if (g_sleep_overlay) { g_sleep_overlay = nullptr; }  // lv_obj_clean will destroy it as child
     create_main_ui();
 }
 
@@ -449,11 +454,21 @@ static void edit_btn_select_cb(lv_event_t* e) {
 // ========== Other Callbacks ==========
 static void back_to_main_cb(lv_event_t* e) {
     g_editing_bg = false;
+
+    // If a sleep overlay somehow survived on a sub-screen (e.g. race before
+    // Opt-B guard), clean it up before destroying the parent screen.
+    if (g_sleep_overlay && lv_obj_get_parent(g_sleep_overlay) != g_main_screen) {
+        lv_obj_del(g_sleep_overlay);  // sync OK: not deleting self
+        g_sleep_overlay = nullptr;
+        // Do NOT restore backlight here — user is awake (interacted with UI).
+    }
+
     lv_scr_load(g_main_screen);
     if (g_edit_screen)        { lv_obj_del_async(g_edit_screen);        g_edit_screen        = nullptr; }
     if (g_wifi_screen)        { lv_obj_del_async(g_wifi_screen);        g_wifi_screen        = nullptr; }
     if (g_button_list_screen) { lv_obj_del_async(g_button_list_screen); g_button_list_screen = nullptr; }
     if (g_settings_needs_rebuild) {
+        if (g_sleep_overlay) { g_sleep_overlay = nullptr; }  // lv_obj_clean will destroy it as child
         create_main_ui();
         g_settings_needs_rebuild = false;
     } else {
