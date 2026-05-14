@@ -10,7 +10,10 @@
 // Transparent LVGL overlay placed above all widgets when the display sleeps.
 // The first touch lands here (not on any button), wakes the display, and
 // destroys the overlay — so subsequent touches reach widgets normally.
-static lv_obj_t* g_sleep_overlay = nullptr;
+// Declared extern in streamdeck.h so ui_settings.cpp can zero it before
+// calling create_main_ui() (which runs lv_obj_clean and destroys the overlay
+// as a child without zeroing the pointer).
+lv_obj_t* g_sleep_overlay = nullptr;
 
 static void sleep_overlay_cb(lv_event_t* e) {
     (void)e;
@@ -22,9 +25,15 @@ static void sleep_overlay_cb(lv_event_t* e) {
 }
 
 static void enter_sleep() {
+    // Only enter sleep from the main screen. If a sub-screen (settings, edit,
+    // wifi) is active, skip this cycle — the timer will retry next loop.
+    if (lv_scr_act() != g_main_screen) return;
+
     pt_set_backlight(0, false);
 
-    g_sleep_overlay = lv_obj_create(lv_scr_act());
+    // Always parent the overlay to g_main_screen (never lv_scr_act()) so
+    // that navigating away and back cannot orphan the pointer.
+    g_sleep_overlay = lv_obj_create(g_main_screen);
     lv_obj_set_size(g_sleep_overlay, lv_pct(100), lv_pct(100));
     lv_obj_set_pos(g_sleep_overlay, 0, 0);
     lv_obj_set_style_bg_opa(g_sleep_overlay,    LV_OPA_TRANSP, LV_PART_MAIN);
