@@ -71,8 +71,10 @@ struct L10n {
 
 const L10n* get_l10n();
 
-extern const char* g_sym_names[20];
-extern const char* g_sym_codes[20];
+#define SYM_COUNT 26
+
+extern const char* g_sym_names[SYM_COUNT];
+extern const char* g_sym_codes[SYM_COUNT];
 
 const char* get_symbol_by_index(int idx);
 int get_index_by_symbol(const char* sym);

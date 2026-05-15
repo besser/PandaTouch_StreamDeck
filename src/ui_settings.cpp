@@ -151,7 +151,7 @@ void create_edit_ui(uint8_t idx) {
         lv_obj_set_size(g_edit_data.dd_icon, 180, 40);
 
         String dd_opts = "";
-        for (int j = 0; j < 20; j++) {
+        for (int j = 0; j < SYM_COUNT; j++) {
             if (j > 0) dd_opts += "\n";
             if (strlen(g_sym_codes[j]) > 0) dd_opts += String(g_sym_codes[j]) + " " + String(g_sym_names[j]);
             else dd_opts += String(g_sym_names[j]);

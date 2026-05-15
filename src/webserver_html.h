@@ -61,7 +61,7 @@ body{background:#121212;color:white}
 </div></div></div>
 
 <script>
-const SYMBOLS={"None":"","OK":"\uF00C","Close":"\uF00D","Copy":"\uF0C5","Paste":"\uF0EA","Cut":"\uF0C4","Play":"\uF04B","Pause":"\uF04C","PlayPause":"\uF04B\uF04C","Mute":"\uF026","Settings":"\uF013","Home":"\uF015","Save":"\uF0C7","Edit":"\uF304","File":"\uF15B","Dir":"\uF07B","Plus":"\uF067","Prev":"\uF048","Next":"\uF051","Stop":"\uF04D"};
+const SYMBOLS={"None":"","OK":"\uF00C","Close":"\uF00D","Copy":"\uF0C5","Paste":"\uF0EA","Cut":"\uF0C4","Play":"\uF04B","Pause":"\uF04C","PlayPause":"\uF04B\uF04C","Mute":"\uF026","Volume Up":"\uF028","Volume Down":"\uF027","Headphones":"\uF025","Settings":"\uF013","Home":"\uF015","Save":"\uF0C7","Edit":"\uF304","File":"\uF15B","Dir":"\uF07B","Plus":"\uF067","Prev":"\uF048","Next":"\uF051","Stop":"\uF04D","Source 1":"\uF026 1","Source 2":"\uF026 2","Source 3":"\uF026 3"};
 const KEYS=['','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','0','1','2','3','4','5','6','7','8','9','F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12','ENTER','SPACE','TAB','ESC','UP','DOWN','LEFT','RIGHT','HOME','END','PAGE_UP','PAGE_DOWN','BACKSPACE','DELETE','PRINT_SCREEN','PAUSE'];
 
 let L10N = {};
@@ -141,7 +141,7 @@ async function load(){
    document.getElementsByName('b'+i+'t')[0].value=d.buttons[i].type;
    document.getElementsByName('b'+i+'c')[0].value='#'+d.buttons[i].color.padStart(6,'0');
    const sIcon=document.getElementsByName('b'+i+'icon')[0];
-    sIcon.innerHTML=Object.entries(SYMBOLS).map(([name,ch])=>`<option value='${name}'>${ch?ch+' ':''}${name}</option>`).join('');
+   sIcon.innerHTML=Object.entries(SYMBOLS).map(([name,ch])=>`<option value='${name}'>${ch?ch+' ':''} ${name}</option>`).join('');
    sIcon.value=d.buttons[i].icon||'None';
    document.getElementsByName('b'+i+'i')[0].value=d.buttons[i].img.startsWith('/')?d.buttons[i].img.substring(1):d.buttons[i].img;
    parseC(i,d.buttons[i].value);toggleBuilder(i);

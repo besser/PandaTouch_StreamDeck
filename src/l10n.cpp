@@ -49,15 +49,62 @@ static const L10n g_l10n_es = {
     "Suspension", "Seleccionar Tiempo de Suspension"
 };
 
-const char* g_sym_names[20] = {"None", "OK", "Close", "Copy", "Paste", "Cut", "Play", "Pause", "PlayPause", "Mute", "Settings", "Home", "Save", "Edit", "File", "Dir", "Plus", "Prev", "Next", "Stop"};
+const char* g_sym_names[SYM_COUNT] = {
+    "None",
+    "OK",
+    "Close",
+    "Copy",
+    "Paste",
+    "Cut",
+    "Play",
+    "Pause",
+    "PlayPause",
+    "Mute",
+    "Volume Up",
+    "Volume Down",
+    "Headphones",
+    "Settings",
+    "Home",
+    "Save",
+    "Edit",
+    "File",
+    "Dir",
+    "Plus",
+    "Prev",
+    "Next",
+    "Stop",
+    "Source 1",
+    "Source 2",
+    "Source 3"
+};
 
-const char* g_sym_codes[20] = {
+const char* g_sym_codes[SYM_COUNT] = {
     "",
-    "\xEF\x80\x8C", "\xEF\x80\x8D", "\xEF\x83\x85", "\xEF\x83\xAA",
-    "\xEF\x83\x84", "\xEF\x81\x8B", "\xEF\x81\x8C", "\xEF\x81\x8B\xEF\x81\x8C",
-    "\xEF\x80\xA6", "\xEF\x80\x93", "\xEF\x80\x95", "\xEF\x83\x87",
-    "\xEF\x8C\x84", "\xEF\x85\x9B", "\xEF\x81\xBB", "\xEF\x81\xA7",
-    "\xEF\x81\x88", "\xEF\x81\x91", "\xEF\x81\x8D"
+    "\xEF\x80\x8C",
+    "\xEF\x80\x8D",
+    "\xEF\x83\x85",
+    "\xEF\x83\xAA",
+    "\xEF\x83\x84",
+    "\xEF\x81\x8B",
+    "\xEF\x81\x8C",
+    "\xEF\x81\x8B\xEF\x81\x8C",
+    "\xEF\x80\xA6",
+    "\xEF\x80\xA8",
+    "\xEF\x80\xA7",
+    "\xEF\x80\xA5",
+    "\xEF\x80\x93",
+    "\xEF\x80\x95",
+    "\xEF\x83\x87",
+    "\xEF\x8C\x84",
+    "\xEF\x85\x9B",
+    "\xEF\x81\xBB",
+    "\xEF\x81\xA7",
+    "\xEF\x81\x88",
+    "\xEF\x81\x91",
+    "\xEF\x81\x8D",
+    "\xEF\x80\xA6 1",
+    "\xEF\x80\xA6 2",
+    "\xEF\x80\xA6 3"
 };
 
 const L10n* get_l10n() {
@@ -65,13 +112,13 @@ const L10n* get_l10n() {
 }
 
 const char* get_symbol_by_index(int idx) {
-    if (idx < 0 || idx >= 20) return "";
+    if (idx < 0 || idx >= SYM_COUNT) return "";
     return g_sym_codes[idx];
 }
 
 int get_index_by_symbol(const char* sym) {
     if (!sym || sym[0] == '\0') return 0;
-    for (int i = 1; i < 20; i++) {
+    for (int i = 1; i < SYM_COUNT; i++) {
         if (strcmp(sym, g_sym_codes[i]) == 0) return i;
     }
     return 0;

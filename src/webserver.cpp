@@ -33,7 +33,7 @@ static uint32_t parse_color(String hex) {
 
 static String find_icon_name(const char* code) {
     if (!code || code[0] == '\0') return "None";
-    for (int j = 0; j < 20; j++) {
+    for (int j = 0; j < SYM_COUNT; j++) {
         if (strcmp(code, g_sym_codes[j]) == 0) return g_sym_names[j];
     }
     return "None";
@@ -210,7 +210,7 @@ void init_webserver() {
             if (request->hasParam(p + "icon", true)) {
                 String iconName = request->getParam(p + "icon", true)->value();
                 bool found = false;
-                for (int j = 0; j < 20; j++) {
+                for (int j = 0; j < SYM_COUNT; j++) {
                     if (iconName == g_sym_names[j]) {
                         const char* sym = g_sym_codes[j];
                         size_t sym_len = strlen(sym);
@@ -373,7 +373,7 @@ void init_webserver() {
                     String rawIcon = iconVal;
                     iconVal.toLowerCase();
                     bool found = false;
-                    for (int j = 0; j < 20; j++) {
+                    for (int j = 0; j < SYM_COUNT; j++) {
                         String name(g_sym_names[j]);
                         name.toLowerCase();
                         if (iconVal == name) {
