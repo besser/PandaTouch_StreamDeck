@@ -130,15 +130,7 @@ void load_settings() {
     g_wifi_enabled = preferences.getBool("wifi_en", (strlen(g_wifi_ssid) > 0));
     preferences.end();
 
-    for (int i = 0; i < MAX_TOTAL_BUTTONS; i++) {
-        if (g_configs[i].imgPath[0] != '\0') {
-            String fpath = g_configs[i].imgPath;
-            if (!fpath.startsWith("/")) fpath = "/" + fpath;
-            g_img_exists[i] = LittleFS.exists(fpath);
-        } else {
-            g_img_exists[i] = false;
-        }
-    }
+    update_image_cache();
 
     if (g_wifi_enabled && strlen(g_wifi_ssid) > 0 && WiFi.status() != WL_CONNECTED) {
         WiFi.mode(WIFI_STA);
@@ -174,6 +166,19 @@ void save_settings(bool saveButtons) {
         if (f) {
             f.write((uint8_t*)g_configs, sizeof(g_configs));
             f.close();
+        }
+        update_image_cache();
+    }
+}
+
+void update_image_cache() {
+    for (int i = 0; i < MAX_TOTAL_BUTTONS; i++) {
+        if (g_configs[i].imgPath[0] != '\0') {
+            String fpath = g_configs[i].imgPath;
+            if (!fpath.startsWith("/")) fpath = "/" + fpath;
+            g_img_exists[i] = LittleFS.exists(fpath);
+        } else {
+            g_img_exists[i] = false;
         }
     }
 }

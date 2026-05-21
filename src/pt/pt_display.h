@@ -15,7 +15,7 @@
 #include "pt_board.h"
 
 #ifndef PT_LVGL_RENDER_PARTIAL_LINES
-#define PT_LVGL_RENDER_PARTIAL_LINES 40
+#define PT_LVGL_RENDER_PARTIAL_LINES 80
 #endif
 
 #ifndef PT_LCD_RENDER_BOUNCE_LINES

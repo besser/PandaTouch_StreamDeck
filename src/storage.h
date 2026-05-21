@@ -35,5 +35,6 @@ extern bool g_wifi_enabled;
 void init_storage();
 void load_settings();
 void save_settings(bool saveButtons = true);
+void update_image_cache();
 
 #endif
