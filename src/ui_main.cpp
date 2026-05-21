@@ -4,6 +4,7 @@
 #include "pt/pt_display.h"
 #include "storage.h"
 #include <LittleFS.h>
+#include <Arduino.h>
 
 lv_obj_t* g_main_screen = nullptr;
 lv_obj_t* g_wifi_label = nullptr;
@@ -30,6 +31,11 @@ static void btn_event_cb(lv_event_t* e) {
 }
 
 static void page_nav_cb(lv_event_t* e) {
+    static uint32_t last_nav_time = 0;
+    uint32_t now = millis();
+    if (now - last_nav_time < 350) return;
+    last_nav_time = now;
+
     int dir = (int)(uintptr_t)lv_event_get_user_data(e);
     if (dir > 0) {
         g_current_page = (g_current_page + 1) % g_num_pages;
