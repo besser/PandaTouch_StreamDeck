@@ -287,6 +287,63 @@ async function updateFirmware(){
  xhr.send(fd);
 }
 
+let draggedIndex = null;
+function dragStart(e, index) {
+ const tagName = e.target.tagName.toLowerCase();
+ if (tagName === 'input' || tagName === 'select' || tagName === 'option' || tagName === 'textarea' || e.target.classList.contains('btn')) {
+  e.preventDefault();
+  return;
+ }
+ draggedIndex = index;
+ e.dataTransfer.setData('text/plain', index);
+ e.currentTarget.style.opacity = '0.5';
+ e.currentTarget.style.border = '2px dashed #00bcd4';
+}
+function dragEnd(e) {
+ e.currentTarget.style.opacity = '1';
+ e.currentTarget.style.border = '1px solid #333';
+}
+function dragOver(e) {
+ e.preventDefault();
+}
+function drop(e, index) {
+ e.preventDefault();
+ if (draggedIndex === null || draggedIndex === index) return;
+ swapButtonValues(draggedIndex, index);
+ draggedIndex = null;
+}
+function swapButtonValues(idx1, idx2) {
+ const fields = ['l', 'v', 't', 'c', 'icon', 'i'];
+ fields.forEach(f => {
+  const el1 = document.getElementsByName('b' + idx1 + f)[0];
+  const el2 = document.getElementsByName('b' + idx2 + f)[0];
+  if (el1 && el2) {
+   const tmp = el1.value;
+   el1.value = el2.value;
+   el2.value = tmp;
+  }
+ });
+ const builders = ['c', 's', 'a', 'm'];
+ builders.forEach(b => {
+  const el1 = document.getElementById(b + idx1);
+  const el2 = document.getElementById(b + idx2);
+  if (el1 && el2) {
+   const tmp = el1.checked;
+   el1.checked = el2.checked;
+   el2.checked = tmp;
+  }
+ });
+ const key1 = document.getElementById('key' + idx1);
+ const key2 = document.getElementById('key' + idx2);
+ if (key1 && key2) {
+  const tmp = key1.value;
+  key1.value = key2.value;
+  key2.value = tmp;
+ }
+ toggleBuilder(idx1);
+ toggleBuilder(idx2);
+}
+
 document.addEventListener('DOMContentLoaded',async()=>{
  const r=await fetch('/api/config');const d=await r.json();
  const container=document.getElementById('buttonContainer');
@@ -295,6 +352,12 @@ document.addEventListener('DOMContentLoaded',async()=>{
   const div=document.createElement('div');
   div.className='card p-2 text-center btn-card';
   div.id='card'+i;
+  div.style.cursor='grab';
+  div.draggable=true;
+  div.addEventListener('dragstart',(e)=>dragStart(e,i));
+  div.addEventListener('dragover',(e)=>dragOver(e));
+  div.addEventListener('drop',(e)=>drop(e,i));
+  div.addEventListener('dragend',(e)=>dragEnd(e));
   div.innerHTML=`
    <b class='mb-2'>Button ${i+1}</b>
    <input type='text' name='b${i}l' class='form-control form-control-sm mb-1' placeholder='Name' maxlength='15'>

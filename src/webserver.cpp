@@ -235,6 +235,8 @@ void init_webserver() {
                     if (!val.startsWith("/")) val = "/" + val;
                     strncpy(g_configs[i].imgPath, val.c_str(), 31);
                     g_configs[i].imgPath[31] = '\0';
+                } else {
+                    g_configs[i].imgPath[0] = '\0';
                 }
             }
         }

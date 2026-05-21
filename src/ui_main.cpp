@@ -167,7 +167,7 @@ void create_main_ui() {
 
     // Brightness Slider
     g_slider = lv_slider_create(nav_cont);
-    lv_obj_set_size(g_slider, 150, 20);
+    lv_obj_set_size(g_slider, 200, 20);
     lv_slider_set_range(g_slider, 10, 100);
     lv_slider_set_value(g_slider, g_brightness, LV_ANIM_OFF);
     // Prevent the vertical component of a slider drag from propagating as a
@@ -179,7 +179,7 @@ void create_main_ui() {
     // Page Indicator and Nav (hidden when only one page is configured)
     if (g_num_pages > 1) {
         lv_obj_t* page_box = lv_obj_create(nav_cont);
-        lv_obj_set_size(page_box, 250, 50);
+        lv_obj_set_size(page_box, 300, 50);
         lv_obj_set_style_bg_opa(page_box, 0, 0);
         lv_obj_set_style_border_width(page_box, 0, 0);
         lv_obj_clear_flag(page_box, LV_OBJ_FLAG_SCROLLABLE);
@@ -187,19 +187,19 @@ void create_main_ui() {
         lv_obj_set_flex_align(page_box, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
         lv_obj_t* prev_btn = lv_btn_create(page_box);
-        lv_obj_set_size(prev_btn, 45, 45);
+        lv_obj_set_size(prev_btn, 110, 45);
         lv_obj_t* prev_lbl = lv_label_create(prev_btn);
         lv_label_set_text(prev_lbl, LV_SYMBOL_LEFT);
         lv_obj_center(prev_lbl);
         lv_obj_add_event_cb(prev_btn, page_nav_cb, LV_EVENT_CLICKED, (void*)(uintptr_t)-1);
 
-        lv_obj_t* page_lbl = lv_label_create(page_box);
-        lv_label_set_text_fmt(page_lbl, "Page %d / %d", g_current_page + 1, g_num_pages);
-        lv_obj_set_style_margin_left(page_lbl, 15, 0);
-        lv_obj_set_style_margin_right(page_lbl, 15, 0);
+        // lv_obj_t* page_lbl = lv_label_create(page_box);
+        // lv_label_set_text_fmt(page_lbl, "Page %d / %d", g_current_page + 1, g_num_pages);
+        // lv_obj_set_style_margin_left(page_lbl, 15, 0);
+        // lv_obj_set_style_margin_right(page_lbl, 15, 0);
 
         lv_obj_t* next_btn = lv_btn_create(page_box);
-        lv_obj_set_size(next_btn, 45, 45);
+        lv_obj_set_size(next_btn, 110, 45);
         lv_obj_t* next_lbl = lv_label_create(next_btn);
         lv_label_set_text(next_lbl, LV_SYMBOL_RIGHT);
         lv_obj_center(next_lbl);
@@ -208,23 +208,26 @@ void create_main_ui() {
 
     // IP and Config
     lv_obj_t* right_box = lv_obj_create(nav_cont);
-    lv_obj_set_size(right_box, 300, 50);
+    lv_obj_set_size(right_box, 200, 50);
     lv_obj_set_style_bg_opa(right_box, 0, 0);
     lv_obj_set_style_border_width(right_box, 0, 0);
+    lv_obj_set_style_pad_all(right_box, 0, 0);
     lv_obj_clear_flag(right_box, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_flex_flow(right_box, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(right_box, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
+    // WiFi Status / IP Address
     g_wifi_label = lv_label_create(right_box);
     String wtxt = "\xEF\x87\xAB " + g_ip_addr;
     lv_label_set_text(g_wifi_label, wtxt.c_str());
     lv_obj_set_style_text_color(g_wifi_label, lv_color_hex(0xFFFFFF), 0);
     lv_obj_set_style_margin_right(g_wifi_label, 20, 0);
 
+    // Settings Button
     g_settings_btn = lv_btn_create(right_box);
-    lv_obj_set_size(g_settings_btn, 110, 45);
+    lv_obj_set_size(g_settings_btn, 45, 45);
     lv_obj_t* set_label = lv_label_create(g_settings_btn);
-    lv_label_set_text(set_label, "\xEF\x80\x93 Config");
+    lv_label_set_text(set_label, "\xEF\x80\x93");
     lv_obj_center(set_label);
     lv_obj_add_event_cb(g_settings_btn, settings_btn_cb, LV_EVENT_CLICKED, NULL);
 }

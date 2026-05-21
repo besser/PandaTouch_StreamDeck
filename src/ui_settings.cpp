@@ -15,6 +15,7 @@ static lv_obj_t* g_wifi_screen = nullptr;
 static lv_obj_t* g_button_list_screen = nullptr;
 static bool g_editing_bg = false;
 static uint8_t g_editing_idx = 0;
+static uint8_t g_swap_source_idx = 0;
 static bool g_settings_needs_rebuild = true;
 static lv_obj_t* g_slider_r = nullptr;
 static lv_obj_t* g_slider_g = nullptr;
@@ -57,6 +58,8 @@ static void edit_btn_select_cb(lv_event_t* e);
 static void grid_selected(const char* txt);
 static void os_selected(const char* txt);
 static void lang_selected(const char* txt);
+static void swap_btn_cb(lv_event_t* e);
+static void swap_target_selected(const char* txt);
 
 // ========== Settings Screen ==========
 void create_settings_ui() {
@@ -224,6 +227,16 @@ void create_edit_ui(uint8_t idx) {
     lv_obj_set_size(g_preview, 100, 100);
     lv_obj_align(g_preview, LV_ALIGN_TOP_LEFT, panel_x + 220, 50);
     lv_obj_set_style_bg_color(g_preview, lv_color_hex(curr_color), LV_PART_MAIN);
+
+    if (!g_editing_bg) {
+        lv_obj_t* swap_btn = lv_btn_create(g_edit_screen);
+        lv_obj_set_size(swap_btn, 100, 40);
+        lv_obj_align(swap_btn, LV_ALIGN_TOP_LEFT, panel_x + 220, 160);
+        lv_obj_t* swl = lv_label_create(swap_btn);
+        lv_label_set_text(swl, g_kb_lang == LANG_ES ? "\xEF\x8C\xA2 Mover" : "\xEF\x8C\xA2 Swap");
+        lv_obj_center(swl);
+        lv_obj_add_event_cb(swap_btn, swap_btn_cb, LV_EVENT_CLICKED, (void*)(uintptr_t)idx);
+    }
 
     if (!g_editing_bg) {
         lv_obj_t* kb = lv_keyboard_create(g_edit_screen);
@@ -507,6 +520,64 @@ static void kb_focus_cb(lv_event_t* e) {
     lv_obj_t* ta = (lv_obj_t*)lv_event_get_target(e);
     lv_obj_t* kb = (lv_obj_t*)lv_event_get_user_data(e);
     lv_keyboard_set_textarea(kb, ta);
+}
+
+static void swap_target_selected(const char* txt) {
+    int num = 0;
+    if (g_kb_lang == LANG_ES) {
+        sscanf(txt, "Boton %d", &num);
+    } else {
+        sscanf(txt, "Button %d", &num);
+    }
+    if (num < 1 || num > BUTTONS_PER_PAGE) return;
+
+    uint8_t page_offset = g_current_page * BUTTONS_PER_PAGE;
+    uint8_t target_idx = page_offset + (num - 1);
+
+    // Swap configurations
+    ButtonConfig tmp = g_configs[g_swap_source_idx];
+    g_configs[g_swap_source_idx] = g_configs[target_idx];
+    g_configs[target_idx] = tmp;
+
+    save_settings(true);
+
+    if (g_edit_screen) {
+        lv_obj_del(g_edit_screen);
+        g_edit_screen = nullptr;
+    }
+    create_button_list_ui();
+}
+
+static void swap_btn_cb(lv_event_t* e) {
+    uint8_t source_idx = (uint8_t)(uintptr_t)lv_event_get_user_data(e);
+    g_swap_source_idx = source_idx;
+
+    int btn_count = g_rows * g_cols;
+    uint8_t page_offset = g_current_page * BUTTONS_PER_PAGE;
+
+    const char* options[BUTTONS_PER_PAGE];
+    static char option_bufs[BUTTONS_PER_PAGE][64];
+    uint8_t opt_count = 0;
+
+    uint8_t local_source_idx = source_idx - page_offset;
+
+    for (int i = 0; i < btn_count; i++) {
+        if (i == local_source_idx) continue;
+        uint8_t global_idx = page_offset + i;
+        sprintf(option_bufs[opt_count], "%s %d: %s", 
+                (g_kb_lang == LANG_ES ? "Boton" : "Button"), 
+                (i + 1), 
+                g_configs[global_idx].label[0] ? g_configs[global_idx].label : "");
+        options[opt_count] = option_bufs[opt_count];
+        opt_count++;
+    }
+
+    static char title_buf[64];
+    sprintf(title_buf, "%s %d...", 
+            (g_kb_lang == LANG_ES ? "Mover Boton" : "Swap Button"), 
+            (local_source_idx + 1));
+
+    create_selection_screen(title_buf, "\xEF\x8C\xA2", options, opt_count, swap_target_selected);
 }
 
 static void save_edit_cb(lv_event_t* e) {
