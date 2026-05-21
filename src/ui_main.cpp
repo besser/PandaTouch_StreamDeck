@@ -120,6 +120,24 @@ void create_main_ui() {
         lv_obj_set_style_bg_color(btn, lv_color_hex(0x000000), LV_STATE_PRESSED);
         lv_obj_set_style_bg_opa(btn, 100, LV_STATE_PRESSED);
 
+        // Add Drop Shadow
+        lv_obj_set_style_shadow_width(btn, 15, LV_PART_MAIN);
+        lv_obj_set_style_shadow_color(btn, lv_color_hex(0x000000), LV_PART_MAIN);
+        lv_obj_set_style_shadow_opa(btn, 150, LV_PART_MAIN);
+        lv_obj_set_style_shadow_ofs_y(btn, 4, LV_PART_MAIN);
+
+        // Add Micro-Animation (Scale down on press)
+        static const lv_style_prop_t trans_props[] = {LV_STYLE_TRANSFORM_SCALE_X, LV_STYLE_TRANSFORM_SCALE_Y, (lv_style_prop_t)0};
+        static lv_style_transition_dsc_t trans_dsc;
+        static bool trans_inited = false;
+        if (!trans_inited) {
+            lv_style_transition_dsc_init(&trans_dsc, trans_props, lv_anim_path_overshoot, 150, 0, NULL);
+            trans_inited = true;
+        }
+        lv_obj_set_style_transition(btn, &trans_dsc, LV_PART_MAIN);
+        lv_obj_set_style_transform_scale_x(btn, 240, LV_STATE_PRESSED);
+        lv_obj_set_style_transform_scale_y(btn, 240, LV_STATE_PRESSED);
+
         bool icon_or_img_present = false;
         if (g_configs[global_idx].imgPath[0] != '\0') {
             String fpath = g_configs[global_idx].imgPath;

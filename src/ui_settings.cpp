@@ -83,6 +83,12 @@ void create_settings_ui() {
         lv_obj_set_size(list, 600, 360);
         lv_obj_align(list, LV_ALIGN_TOP_MID, 0, 45);
         lv_obj_clear_flag(list, LV_OBJ_FLAG_SCROLL_CHAIN_VER);
+        
+        // Premium Floating Modal effect
+        lv_obj_set_style_shadow_width(list, 30, LV_PART_MAIN);
+        lv_obj_set_style_shadow_color(list, lv_color_hex(0x000000), LV_PART_MAIN);
+        lv_obj_set_style_shadow_opa(list, LV_OPA_80, LV_PART_MAIN);
+        lv_obj_set_style_border_width(list, 0, LV_PART_MAIN);
 
         lv_obj_t* bg_btn = lv_list_add_btn(list, "\xEF\x80\xBE", l->global_bg);
         lv_obj_add_event_cb(bg_btn, settings_bg_btn_cb, LV_EVENT_CLICKED, NULL);
@@ -425,6 +431,12 @@ static void create_button_list_ui() {
     lv_obj_set_size(list, 600, 360);
     lv_obj_align(list, LV_ALIGN_TOP_MID, 0, 45);
     lv_obj_clear_flag(list, LV_OBJ_FLAG_SCROLL_CHAIN_VER);
+
+    // Premium Floating Modal effect
+    lv_obj_set_style_shadow_width(list, 30, LV_PART_MAIN);
+    lv_obj_set_style_shadow_color(list, lv_color_hex(0x000000), LV_PART_MAIN);
+    lv_obj_set_style_shadow_opa(list, LV_OPA_80, LV_PART_MAIN);
+    lv_obj_set_style_border_width(list, 0, LV_PART_MAIN);
 
     int btn_count = g_rows * g_cols;
     uint8_t page_offset = g_current_page * BUTTONS_PER_PAGE;

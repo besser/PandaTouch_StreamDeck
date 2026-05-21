@@ -8,7 +8,7 @@
 #define BUTTONS_PER_PAGE 20
 #define MAX_TOTAL_BUTTONS (MAX_PAGES * BUTTONS_PER_PAGE)
 #define MAX_BUTTONS BUTTONS_PER_PAGE // Keep this for backward compatibility in some places or refactor
-#define PANDA_VERSION "1.8.0"
+#define PANDA_VERSION "1.9.0"
 
 enum ButtonType {
     BTN_TYPE_APP = 0,
