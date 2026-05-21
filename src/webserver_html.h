@@ -200,9 +200,41 @@ document.getElementById('configForm').onsubmit=async(e)=>{
  alert(L10N.config_saved);load();
 };
 
+function resizeImage(file, maxW, maxH) {
+ return new Promise((resolve) => {
+  if (!file.type.startsWith('image/') && !file.name.toLowerCase().endsWith('.svg')) { resolve(file); return; }
+  const img = new Image();
+  img.src = URL.createObjectURL(file);
+  img.onload = () => {
+   URL.revokeObjectURL(img.src);
+   const canvas = document.createElement('canvas');
+   const size = Math.min(img.width, img.height);
+   const sx = (img.width - size) / 2;
+   const sy = (img.height - size) / 2;
+   canvas.width = maxW;
+   canvas.height = maxH;
+   const ctx = canvas.getContext('2d');
+   ctx.drawImage(img, sx, sy, size, size, 0, 0, maxW, maxH);
+   canvas.toBlob((blob) => {
+    if (blob) {
+     let name = file.name;
+     const dotIdx = name.lastIndexOf('.');
+     if (dotIdx !== -1) name = name.substring(0, dotIdx);
+     resolve(new File([blob], name + '.png', { type: 'image/png' }));
+    } else {
+     resolve(file);
+    }
+   }, 'image/png');
+  };
+  img.onerror = () => resolve(file);
+ });
+}
+
 async function upload(){
  const fi=document.getElementById('fileInput');if(!fi.files[0])return;
- const fd=new FormData();fd.append('file',fi.files[0]);
+ let file = fi.files[0];
+ file = await resizeImage(file, 64, 64);
+ const fd=new FormData();fd.append('file',file);
  await fetch('/api/upload',{method:'POST',body:fd});load();
 }
 
