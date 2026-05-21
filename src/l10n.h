@@ -52,6 +52,7 @@ struct L10n {
     const char* field_ssid;
     const char* field_pass;
     const char* wifi_save_connect;
+    const char* wifi_enable;
     const char* select_grid;
     const char* select_os;
     const char* select_lang;

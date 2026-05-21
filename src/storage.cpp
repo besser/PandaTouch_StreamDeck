@@ -26,6 +26,9 @@ uint8_t g_num_pages = MAX_PAGES;
 uint8_t g_sleep_timeout = 0;
 String g_wifi_status = "Disconnected";
 String g_ip_addr = "0.0.0.0";
+bool g_img_exists[MAX_TOTAL_BUTTONS] = {false};
+bool g_wifi_enabled = false;
+
 
 static Preferences preferences;
 
@@ -124,10 +127,24 @@ void load_settings() {
 
     preferences.getString("wssid", g_wifi_ssid, 31);
     preferences.getString("wpass", g_wifi_pass, 63);
+    g_wifi_enabled = preferences.getBool("wifi_en", (strlen(g_wifi_ssid) > 0));
     preferences.end();
 
-    if (strlen(g_wifi_ssid) > 0 && WiFi.status() != WL_CONNECTED) {
+    for (int i = 0; i < MAX_TOTAL_BUTTONS; i++) {
+        if (g_configs[i].imgPath[0] != '\0') {
+            String fpath = g_configs[i].imgPath;
+            if (!fpath.startsWith("/")) fpath = "/" + fpath;
+            g_img_exists[i] = LittleFS.exists(fpath);
+        } else {
+            g_img_exists[i] = false;
+        }
+    }
+
+    if (g_wifi_enabled && strlen(g_wifi_ssid) > 0 && WiFi.status() != WL_CONNECTED) {
+        WiFi.mode(WIFI_STA);
         WiFi.begin(g_wifi_ssid, g_wifi_pass);
+    } else if (!g_wifi_enabled) {
+        WiFi.mode(WIFI_OFF);
     }
 }
 
@@ -144,6 +161,7 @@ void save_settings(bool saveButtons) {
     preferences.putUChar("page", g_current_page);
     preferences.putString("wssid", g_wifi_ssid);
     preferences.putString("wpass", g_wifi_pass);
+    preferences.putBool("wifi_en", g_wifi_enabled);
     preferences.end();
 
     if (saveButtons) {

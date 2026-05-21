@@ -25,6 +25,7 @@ static lv_obj_t* g_preview = nullptr;
 struct WifiUIData {
     lv_obj_t* ta_ssid;
     lv_obj_t* ta_pass;
+    lv_obj_t* sw_wifi;
 };
 static WifiUIData g_wifi_data;
 
@@ -295,6 +296,19 @@ void create_wifi_ui() {
     lv_obj_align(g_wifi_data.ta_pass, LV_ALIGN_TOP_LEFT, 20, 140);
     lv_textarea_set_text(g_wifi_data.ta_pass, g_wifi_pass);
 
+    lv_obj_t* sw_label = lv_label_create(g_wifi_screen);
+    lv_label_set_text(sw_label, l->wifi_enable);
+    lv_obj_align(sw_label, LV_ALIGN_TOP_LEFT, 400, 50);
+
+    g_wifi_data.sw_wifi = lv_switch_create(g_wifi_screen);
+    lv_obj_set_size(g_wifi_data.sw_wifi, 60, 30);
+    lv_obj_align(g_wifi_data.sw_wifi, LV_ALIGN_TOP_LEFT, 400, 75);
+    if (g_wifi_enabled) {
+        lv_obj_add_state(g_wifi_data.sw_wifi, LV_STATE_CHECKED);
+    } else {
+        lv_obj_remove_state(g_wifi_data.sw_wifi, LV_STATE_CHECKED);
+    }
+
     lv_obj_t* kb = lv_keyboard_create(g_wifi_screen);
     lv_keyboard_set_textarea(kb, g_wifi_data.ta_ssid);
     lv_obj_set_size(kb, 780, 240);
@@ -500,9 +514,19 @@ static void save_wifi_cb(lv_event_t* e) {
     strncpy(g_wifi_pass, lv_textarea_get_text(g_wifi_data.ta_pass), 63);
     g_wifi_pass[63] = '\0';
 
+    g_wifi_enabled = lv_obj_has_state(g_wifi_data.sw_wifi, LV_STATE_CHECKED);
     save_settings();
-    WiFi.disconnect();
-    WiFi.begin(g_wifi_ssid, g_wifi_pass);
+
+    if (g_wifi_enabled) {
+        WiFi.mode(WIFI_STA);
+        WiFi.disconnect();
+        WiFi.begin(g_wifi_ssid, g_wifi_pass);
+    } else {
+        WiFi.disconnect();
+        WiFi.mode(WIFI_OFF);
+        g_wifi_status = "Disabled";
+        g_ip_addr = "Disabled";
+    }
 
     lv_scr_load(g_main_screen);
     if (g_wifi_screen) { lv_obj_del_async(g_wifi_screen); g_wifi_screen = nullptr; }

@@ -128,10 +128,32 @@ static void build_l10n_json(AsyncWebServerRequest* request) {
 
 void check_wifi_status() {
     static bool was_connected = false;
+    static bool was_enabled = true;
     static unsigned long last_wifi_check = 0;
 
     if (millis() - last_wifi_check < 2000) return;
     last_wifi_check = millis();
+
+    if (!g_wifi_enabled) {
+        if (was_enabled) {
+            WiFi.disconnect();
+            WiFi.mode(WIFI_OFF);
+            g_wifi_status = "Disabled";
+            g_ip_addr = "Disabled";
+            was_enabled = false;
+            was_connected = false;
+            if (g_wifi_label) {
+                String wtxt = "\xEF\x87\xAB " + g_ip_addr;
+                lv_label_set_text(g_wifi_label, wtxt.c_str());
+            }
+        }
+        return;
+    }
+
+    if (!was_enabled) {
+        was_enabled = true;
+        was_connected = !was_connected; // Force status refresh
+    }
 
     bool is_connected = (WiFi.status() == WL_CONNECTED);
 

@@ -2,6 +2,7 @@
 #include "ui_settings.h"
 #include "ble_actions.h"
 #include "pt/pt_display.h"
+#include "storage.h"
 #include <LittleFS.h>
 
 lv_obj_t* g_main_screen = nullptr;
@@ -118,7 +119,7 @@ void create_main_ui() {
             String fpath = g_configs[global_idx].imgPath;
             if (!fpath.startsWith("/")) fpath = "/" + fpath;
 
-            if (LittleFS.exists(fpath)) {
+            if (g_img_exists[global_idx]) {
                 lv_obj_t* img = lv_image_create(btn);
                 char full_path[64];
                 sprintf(full_path, "L:%s", fpath.c_str());

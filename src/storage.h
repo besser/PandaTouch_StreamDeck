@@ -28,6 +28,9 @@ extern uint8_t g_num_pages;
 extern uint8_t g_sleep_timeout;
 extern String g_wifi_status;
 extern String g_ip_addr;
+extern bool g_img_exists[MAX_TOTAL_BUTTONS];
+extern bool g_wifi_enabled;
+
 
 void init_storage();
 void load_settings();
